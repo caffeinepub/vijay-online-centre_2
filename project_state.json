@@ -1,0 +1,199 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Vijay Online Centre - A professional Android digital service platform for India with Navy Blue/Silver theme. Features: splash screen with Hindi welcome message, permanent admin login (vijay@123user/vijay@2026), customer OTP/manual login, 32-service searchable catalog (government documents, certificates, pensions, tickets etc.), service forms with document upload, real-time admin dashboard with accept/reject, dual-mode payment (permanent QR + auto-generate QR), Flipkart-style order tracking (4 stages), auto receipt generation, Vijay AI chatbot (Hindi/English), WhatsApp/call/map contact options, bottom navigation, cloud database, push notifications.",
+  "architectural_notes": [
+    "Android app with real-time cloud database (Firebase recommended) and secure document storage",
+    "Admin credentials hardcoded: vijay@123user / vijay@2026 — no expiry logic",
+    "Push notifications required for order status updates",
+    "Document upload must support Image, PDF, Aadhaar, Biodata formats",
+    "QR payment: two modes — static admin-uploaded image and dynamic amount-based auto-generated QR"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Vijay Online Centre app logo — navy blue circular badge with silver 'V' monogram and 'Vijay Online Centre' text in Hindi and English (vijay-logo.dim_512x512.png)\n- Splash screen background — deep navy blue gradient with subtle silver geometric pattern and light rays (splash-bg.dim_1080x1920.png)\n- Service category icon set — 8 flat silver-on-navy icons representing documents, certificates, pension, tickets, payment, ID cards, land records, and business registration (service-icons.dim_256x256.png)",
+  "existing_features": [
+    {
+      "id": "feature-create-a-splash-screen-that-displays-the-vijay-online-centre-logo-generated-asset-app-name-vijay-online-centre-and-the-hindi-welcome-message-the-splash-screen-should-display-for-2-seconds-with-a-fade-in-animation-before-transitioning-to-the-login-screen",
+      "title": "Create a splash screen that displays the Vijay Online Centre logo (generated asset), app name 'Vijay Online Centre', and the Hindi welcome message 'स्वागत है आपका हमारे विजय ऑनलाइन प्लेटफ़ॉर्म पर'. The splash screen should display for ~2 seconds with a fade-in animation before transitioning to the login screen.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-permanent-admin-login-screen-with-hardcoded-credentials-user-id-vijay-123user-password-vijay-2026-admin-session-must-never-expire-and-must-provide-unlimited-lifetime-access-store-admin-session-in-local-state-so-the-admin-remains-logged-in-across-page-reloads",
+      "title": "Implement a permanent Admin Login screen with hardcoded credentials: User ID 'vijay@123user', Password 'vijay@2026'. Admin session must never expire and must provide unlimited lifetime access. Store admin session in local state so the admin remains logged in across page reloads.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-customer-login-screen-with-two-options-1-manual-login-using-mobile-number-a-pin-password-and-2-otp-based-login-using-mobile-number-simulated-otp-flow-since-real-sms-is-not-supported-display-otp-in-app-for-demo-customer-accounts-must-never-expire-and-support-unlimited-registered-users-stored-in-the-motoko-backend",
+      "title": "Implement a Customer Login screen with two options: (1) Manual login using mobile number + a PIN/password, and (2) OTP-based login using mobile number (simulated OTP flow since real SMS is not supported — display OTP in-app for demo). Customer accounts must never expire and support unlimited registered users stored in the Motoko backend.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-searchable-service-catalog-displaying-all-32-services-1-aay-praman-patra-2-jati-praman-patra-3-niwas-praman-patra-4-janm-praman-patra-5-mrityu-praman-patra-6-naya-pan-card-7-pan-card-correction-8-aadhar-card-update-9-voter-id-new-10-ration-card-online-11-ayushman-card-12-driving-license-13-naya-passport-14-pf-withdrawal-kyc-15-e-shram-card-16-pension-kyc-17-bijli-bill-payment-18-gadi-ka-bima-19-railway-ticket-20-flight-ticket-21-pm-kisan-registration-22-vridha-pension-23-vidhwa-pension-24-divyang-pension-25-kanya-sumangala-yojana-26-up-scholarship-27-charitra-praman-patra-28-police-verification-29-bhulekh-30-shadi-registration-31-udyam-registration-32-gazette-notification-include-a-real-time-search-filter-input-at-the-top-each-service-is-displayed-as-a-tappable-card",
+      "title": "Build a searchable service catalog displaying all 32 services: (1) Aay Praman Patra, (2) Jati Praman Patra, (3) Niwas Praman Patra, (4) Janm Praman Patra, (5) Mrityu Praman Patra, (6) Naya Pan Card, (7) Pan Card Correction, (8) Aadhar Card Update, (9) Voter ID New, (10) Ration Card Online, (11) Ayushman Card, (12) Driving License, (13) Naya Passport, (14) PF Withdrawal/KYC, (15) E-Shram Card, (16) Pension KYC, (17) Bijli Bill Payment, (18) Gadi ka Bima, (19) Railway Ticket, (20) Flight Ticket, (21) PM Kisan Registration, (22) Vridha Pension, (23) Vidhwa Pension, (24) Divyang Pension, (25) Kanya Sumangala Yojana, (26) UP Scholarship, (27) Charitra Praman Patra, (28) Police Verification, (29) Bhulekh, (30) Shadi Registration, (31) Udyam Registration, (32) Gazette Notification. Include a real-time search/filter input at the top. Each service is displayed as a tappable card.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-service-application-form-for-each-of-the-32-services-the-form-must-include-name-text-mobile-number-numeric-address-textarea-document-upload-accepts-image-or-pdf-file-stored-as-base64-in-backend-and-a-submit-button-on-submission-save-the-form-entry-to-the-motoko-backend-with-a-timestamp-assigned-service-name-customer-info-and-initial-status-form-submitted",
+      "title": "Create a service application form for each of the 32 services. The form must include: Name (text), Mobile Number (numeric), Address (textarea), Document Upload (accepts image or PDF file, stored as base64 in backend), and a Submit button. On submission, save the form entry to the Motoko backend with a timestamp, assigned service name, customer info, and initial status 'Form Submitted'.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-real-time-admin-dashboard-accessible-only-when-logged-in-as-admin-that-lists-all-submitted-service-forms-each-entry-must-show-customer-name-address-selected-service-uploaded-document-preview-image-thumbnail-or-pdf-icon-date-time-of-submission-each-entry-must-have-two-action-buttons-accept-green-checkmark-and-reject-red-cross-accepting-moves-the-order-status-to-payment-completed-or-processing-rejecting-marks-it-rejected-the-dashboard-must-refresh-to-show-new-submissions-without-a-full-page-reload",
+      "title": "Build a real-time Admin Dashboard (accessible only when logged in as admin) that lists all submitted service forms. Each entry must show: Customer Name, Address, Selected Service, Uploaded document preview (image thumbnail or PDF icon), Date & Time of submission. Each entry must have two action buttons: Accept (green checkmark) and Reject (red cross). Accepting moves the order status to 'Payment Completed' or 'Processing'; Rejecting marks it 'Rejected'. The dashboard must refresh to show new submissions without a full page reload.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-dual-mode-payment-system-1-permanent-qr-mode-admin-can-upload-a-qr-image-once-from-the-admin-panel-this-same-qr-image-is-stored-in-the-backend-and-always-displayed-to-customers-on-the-payment-screen-the-uploaded-upi-qr-from-the-user-s-provided-image-img-20260228-093258-jpg-icici-bank-phonepe-qr-should-be-used-as-the-default-pre-loaded-qr-2-auto-qr-generate-mode-admin-enters-a-specific-amount-the-frontend-generates-a-upi-payment-qr-code-dynamically-using-a-qr-library-encoding-a-upi-deep-link-string-after-the-customer-scans-and-pays-the-admin-can-manually-confirm-payment-which-advances-the-order-status-to-payment-completed",
+      "title": "Implement a dual-mode payment system. (1) Permanent QR Mode: Admin can upload a QR image once from the admin panel; this same QR image is stored in the backend and always displayed to customers on the payment screen. The uploaded UPI QR from the user's provided image (IMG_20260228_093258.jpg — ICICI Bank PhonePe QR) should be used as the default pre-loaded QR. (2) Auto QR Generate Mode: Admin enters a specific amount; the frontend generates a UPI payment QR code dynamically using a QR library encoding a UPI deep-link string. After the customer scans and pays, the admin can manually confirm payment, which advances the order status to 'Payment Completed'.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-flipkart-style-4-stage-order-tracking-for-each-submitted-service-application-stages-in-order-1-form-submitted-2-payment-completed-3-processing-admin-working-4-filling-completed-display-a-horizontal-progress-stepper-with-icons-circles-and-connecting-lines-the-current-active-stage-is-highlighted-customers-can-view-their-order-tracking-from-my-orders-or-a-tracking-section",
+      "title": "Add Flipkart-style 4-stage order tracking for each submitted service application. Stages in order: (1) Form Submitted → (2) Payment Completed → (3) Processing (Admin Working) → (4) Filling Completed. Display a horizontal progress stepper with icons/circles and connecting lines. The current active stage is highlighted. Customers can view their order tracking from 'My Orders' or a tracking section.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-an-auto-generated-receipt-that-is-shown-and-printable-downloadable-as-html-when-an-order-reaches-filling-completed-status-the-receipt-must-include-vijay-online-centre-header-service-name-amount-paid-date-time-and-payment-status-style-the-receipt-like-a-professional-invoice-with-the-navy-blue-silver-theme",
+      "title": "Implement an auto-generated receipt that is shown (and printable/downloadable as HTML) when an order reaches 'Filling Completed' status. The receipt must include: Vijay Online Centre header, Service Name, Amount Paid, Date & Time, and Payment Status. Style the receipt like a professional invoice with the Navy Blue & Silver theme.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-vijay-ai-chatbot-assistant-accessible-via-a-floating-chat-button-on-all-screens-the-chatbot-must-support-both-hindi-and-english-implement-a-rule-based-chatbot-with-pre-defined-responses-covering-how-to-apply-for-services-payment-help-order-tracking-help-contact-information-and-general-guidance-about-the-platform-display-it-as-a-slide-up-chat-panel-with-a-vijay-ai-24x7-assistant-header",
+      "title": "Add a 'Vijay AI' chatbot assistant accessible via a floating chat button on all screens. The chatbot must support both Hindi and English. Implement a rule-based chatbot with pre-defined responses covering: how to apply for services, payment help, order tracking help, contact information, and general guidance about the platform. Display it as a slide-up chat panel with a 'Vijay AI — 24x7 Assistant' header.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-contact-section-accessible-from-bottom-navigation-or-a-dedicated-screen-with-three-options-1-whatsapp-chat-button-that-opens-wa-me-918173064549-2-direct-call-button-that-triggers-tel-918173064549-3-google-maps-location-button-that-opens-maps-google-com-with-a-search-query-for-the-business-display-the-phone-number-91-81730-64549-prominently",
+      "title": "Add a Contact section (accessible from bottom navigation or a dedicated screen) with three options: (1) WhatsApp Chat button that opens wa.me/918173064549, (2) Direct Call button that triggers tel:+918173064549, (3) Google Maps location button that opens maps.google.com with a search query for the business. Display the phone number +91 81730 64549 prominently.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-premium-navy-blue-0a1628-0d2137-and-silver-c0c0c0-e8e8e8-ui-theme-consistently-across-all-screens-use-a-bottom-navigation-bar-with-icons-for-home-services-my-orders-contact-and-admin-only-dashboard-include-smooth-page-transition-animations-and-card-hover-press-effects-use-professional-fonts-system-sans-serif-or-google-fonts-equivalent-ensure-the-layout-is-mobile-first-and-optimized-for-small-screens-360px-width-minimum-without-any-zoom-or-overflow-issues",
+      "title": "Apply a premium Navy Blue (#0A1628 / #0D2137) and Silver (#C0C0C0 / #E8E8E8) UI theme consistently across all screens. Use a bottom navigation bar with icons for: Home, Services, My Orders, Contact, and (admin-only) Dashboard. Include smooth page transition animations and card hover/press effects. Use professional fonts (system sans-serif or Google Fonts equivalent). Ensure the layout is mobile-first and optimized for small screens (360px width minimum) without any zoom or overflow issues.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Splash screen with logo and Hindi welcome message",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Permanent admin login screen (vijay@123user / vijay@2026, never expires)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Customer login via mobile OTP or manual, never-expiring, unlimited users",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Searchable service catalog with all 32 government/utility services",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Service form with Name, Mobile, Address, Document Upload, Submit for each service",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Real-time admin dashboard showing submitted forms with Accept/Reject actions",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Dual-mode payment: permanent admin-uploaded QR + auto-generated QR with amount",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Flipkart-style 4-stage order tracking (Submitted > Payment > Processing > Completed)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Auto-generated receipt with service name, amount, date/time, payment status",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Vijay AI chatbot with 24x7 Hindi & English customer support",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Contact options: WhatsApp button, direct call, Google Map for +91 81730 64549",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Premium Navy Blue and Silver UI theme with smooth animations, bottom navigation, optimized for low-end Android",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Design and implement the complete Motoko backend actor to store: customer accounts (mobile, password hash, name), service order submissions (orderId, customerId, serviceName, name, mobile, address, documentBase64, status, amount, timestamp), admin QR settings (permanentQrBase64, autoQrAmount), and payment confirmation records. Expose query and update functions for: submitOrder, getOrdersByCustomer, getAllOrders (admin), updateOrderStatus (admin), setPermQR (admin), getPermQR, confirmPayment (admin).",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Vijay Online Centre",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

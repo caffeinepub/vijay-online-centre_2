@@ -1,0 +1,42 @@
+export interface Service {
+  id: number;
+  name: string;
+  category: string;
+  icon: string;
+  description: string;
+}
+
+export const SERVICES: Service[] = [
+  { id: 1, name: 'Aay Praman Patra', category: 'Certificate', icon: '📄', description: 'Income Certificate' },
+  { id: 2, name: 'Jati Praman Patra', category: 'Certificate', icon: '📋', description: 'Caste Certificate' },
+  { id: 3, name: 'Niwas Praman Patra', category: 'Certificate', icon: '🏠', description: 'Domicile Certificate' },
+  { id: 4, name: 'Janm Praman Patra', category: 'Certificate', icon: '👶', description: 'Birth Certificate' },
+  { id: 5, name: 'Mrityu Praman Patra', category: 'Certificate', icon: '📜', description: 'Death Certificate' },
+  { id: 6, name: 'Naya Pan Card', category: 'ID Card', icon: '💳', description: 'New PAN Card' },
+  { id: 7, name: 'Pan Card Correction', category: 'ID Card', icon: '✏️', description: 'PAN Card Update' },
+  { id: 8, name: 'Aadhar Card Update', category: 'ID Card', icon: '🪪', description: 'Aadhaar Update' },
+  { id: 9, name: 'Voter ID New', category: 'ID Card', icon: '🗳️', description: 'New Voter ID' },
+  { id: 10, name: 'Ration Card Online', category: 'ID Card', icon: '🍚', description: 'Ration Card' },
+  { id: 11, name: 'Ayushman Card', category: 'Health', icon: '🏥', description: 'Health Insurance Card' },
+  { id: 12, name: 'Driving License', category: 'License', icon: '🚗', description: 'Driving License' },
+  { id: 13, name: 'Naya Passport', category: 'Travel', icon: '✈️', description: 'New Passport' },
+  { id: 14, name: 'PF Withdrawal/KYC', category: 'Finance', icon: '💰', description: 'PF Withdrawal & KYC' },
+  { id: 15, name: 'E-Shram Card', category: 'Labour', icon: '👷', description: 'E-Shram Registration' },
+  { id: 16, name: 'Pension KYC', category: 'Pension', icon: '👴', description: 'Pension KYC Update' },
+  { id: 17, name: 'Bijli Bill Payment', category: 'Utility', icon: '⚡', description: 'Electricity Bill' },
+  { id: 18, name: 'Gadi ka Bima', category: 'Insurance', icon: '🚙', description: 'Vehicle Insurance' },
+  { id: 19, name: 'Railway Ticket', category: 'Travel', icon: '🚂', description: 'Train Ticket Booking' },
+  { id: 20, name: 'Flight Ticket', category: 'Travel', icon: '✈️', description: 'Flight Booking' },
+  { id: 21, name: 'PM Kisan Registration', category: 'Agriculture', icon: '🌾', description: 'PM Kisan Scheme' },
+  { id: 22, name: 'Vridha Pension', category: 'Pension', icon: '👴', description: 'Old Age Pension' },
+  { id: 23, name: 'Vidhwa Pension', category: 'Pension', icon: '👩', description: 'Widow Pension' },
+  { id: 24, name: 'Divyang Pension', category: 'Pension', icon: '♿', description: 'Disability Pension' },
+  { id: 25, name: 'Kanya Sumangala Yojana', category: 'Scheme', icon: '👧', description: 'Girl Child Scheme' },
+  { id: 26, name: 'UP Scholarship', category: 'Education', icon: '🎓', description: 'UP Scholarship' },
+  { id: 27, name: 'Charitra Praman Patra', category: 'Certificate', icon: '📝', description: 'Character Certificate' },
+  { id: 28, name: 'Police Verification', category: 'Certificate', icon: '👮', description: 'Police Verification' },
+  { id: 29, name: 'Bhulekh', category: 'Land', icon: '🗺️', description: 'Land Records' },
+  { id: 30, name: 'Shadi Registration', category: 'Certificate', icon: '💒', description: 'Marriage Registration' },
+  { id: 31, name: 'Udyam Registration', category: 'Business', icon: '🏭', description: 'MSME Registration' },
+  { id: 32, name: 'Gazette Notification', category: 'Legal', icon: '📰', description: 'Gazette Notification' },
+];

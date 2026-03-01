@@ -1,0 +1,369 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Vijay Online Centre — Frontend Implementation Plan",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Create splash screen with logo, app name, and Hindi welcome message",
+      "acceptanceCriteria": [
+        "Splash screen shows logo, app name, and Hindi welcome message on app load",
+        "Transitions automatically to login screen after ~2 seconds",
+        "Uses Navy Blue background with Silver text styling"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/SplashScreen.tsx",
+          "operation": "create",
+          "description": "Create splash screen component that displays the Vijay Online Centre logo (frontend/public/assets/generated/vijay-logo.dim_512x512.png), app name 'Vijay Online Centre', and Hindi message 'स्वागत है आपका हमारे विजय ऑनलाइन प्लेटफ़ॉर्म पर'. Implement fade-in animation and auto-transition to login after 2 seconds. Use Navy Blue (#0A1628) background and Silver (#C0C0C0) text."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire SplashScreen as the initial route. Show SplashScreen on first app load, then automatically navigate to the login selection screen after the splash duration completes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Implement permanent Admin Login with hardcoded credentials and persistent session",
+      "acceptanceCriteria": [
+        "Separate Admin Login screen exists with User ID and Password fields",
+        "Only the exact credentials vijay@123user / vijay@2026 grant admin access",
+        "Admin session persists across page reloads (localStorage)",
+        "No session timeout or expiry logic for admin"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminLogin.tsx",
+          "operation": "create",
+          "description": "Create Admin Login screen with User ID and Password input fields. Validate credentials against hardcoded values (vijay@123user / vijay@2026). On successful login, call backend assignCallerUserRole to set admin role, then store admin session flag in localStorage. Display error for invalid credentials. Use authorization component to manage admin role assignment. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useAdminAuth.ts",
+          "operation": "create",
+          "description": "Create custom hook to manage admin authentication state. Check localStorage for existing admin session on mount. Provide login, logout, and isAdmin check functions. Persist admin session across page reloads using localStorage key 'adminSession'."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /admin-login that renders AdminLogin component. Wire admin session check to conditionally show admin-only routes and bottom nav items."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Implement Customer Login with manual and simulated OTP options",
+      "acceptanceCriteria": [
+        "Customer login screen offers both manual and OTP login modes",
+        "Manual login accepts mobile number + password",
+        "OTP mode shows a simulated OTP confirmation step",
+        "Customer accounts stored in backend with no expiry",
+        "Unlimited users can register and log in"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/CustomerLogin.tsx",
+          "operation": "create",
+          "description": "Create Customer Login screen with toggle between Manual Login (mobile + password) and OTP Login modes. Manual mode calls backend loginCustomer(mobile, password). OTP mode generates a random 6-digit OTP displayed in-app (simulated, no SMS) and stores it temporarily; user enters the displayed OTP to confirm. Use authorization component to manage user role assignment on successful login. On success, navigate to the main app. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/CustomerRegistration.tsx",
+          "operation": "create",
+          "description": "Create Customer Registration screen with fields: Name, Mobile Number, and Password. On submit, call backend registerCustomer(name, mobile, password). Show success message and navigate to CustomerLogin after successful registration."
+        },
+        {
+          "path": "frontend/src/hooks/useCustomerAuth.ts",
+          "operation": "create",
+          "description": "Create custom hook to manage customer authentication state. Provide register, login, logout functions. Store authenticated customer info (mobile, name) in React state or context. Use authorization component to check if the user has #user role. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add routes for /customer-login and /customer-register. Wire customer session check to protect customer-facing routes. After splash screen, navigate to a login selection screen that offers Admin Login and Customer Login options."
+        },
+        {
+          "path": "frontend/src/components/LoginSelection.tsx",
+          "operation": "create",
+          "description": "Create a login selection screen that presents two buttons: 'Admin Login' and 'Customer Login'. Admin Login navigates to /admin-login, Customer Login navigates to /customer-login. This screen appears after the splash screen."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Build searchable catalog displaying all 32 services with real-time filter",
+      "acceptanceCriteria": [
+        "All 32 services are listed as cards",
+        "Search input filters services in real time by name",
+        "Each service card is tappable and navigates to its form",
+        "Service names are displayed exactly as specified"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/data/services.ts",
+          "operation": "create",
+          "description": "Create a typed array of all 32 service objects. Each object includes id, name (exact as specified), and a category or icon identifier. Service names: Aay Praman Patra, Jati Praman Patra, Niwas Praman Patra, Janm Praman Patra, Mrityu Praman Patra, Naya Pan Card, Pan Card Correction, Aadhar Card Update, Voter ID New, Ration Card Online, Ayushman Card, Driving License, Naya Passport, PF Withdrawal/KYC, E-Shram Card, Pension KYC, Bijli Bill Payment, Gadi ka Bima, Railway Ticket, Flight Ticket, PM Kisan Registration, Vridha Pension, Vidhwa Pension, Divyang Pension, Kanya Sumangala Yojana, UP Scholarship, Charitra Praman Patra, Police Verification, Bhulekh, Shadi Registration, Udyam Registration, Gazette Notification."
+        },
+        {
+          "path": "frontend/src/components/ServiceCatalog.tsx",
+          "operation": "create",
+          "description": "Create ServiceCatalog component that displays all 32 services as tappable cards. Include a search input at the top that filters the displayed services in real time by name. Use the generated service-icons.dim_256x256.png asset to display category icons on cards. Each card navigates to /service-form/:serviceName on tap."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /services that renders ServiceCatalog. Wire this route to the 'Services' tab in the bottom navigation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Create service application form for each service with document upload",
+      "acceptanceCriteria": [
+        "All 32 services share the same form structure with service name pre-filled",
+        "Form validates that Name, Mobile, and Address are non-empty before submit",
+        "Document upload accepts image and PDF files",
+        "Submitted form is persisted in backend with timestamp and status 'Form Submitted'",
+        "Customer sees a confirmation message after successful submission"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ServiceForm.tsx",
+          "operation": "create",
+          "description": "Create ServiceForm component that accepts a serviceName parameter from the route. Display form fields: Name (text input), Mobile Number (numeric input), Address (textarea), Document Upload (file input accepting image/PDF). Use blob-storage component to handle document upload as ExternalBlob; upload the file and retrieve the documentKey. On submit, validate fields, call backend submitOrder with the documentKey, and show a success confirmation message. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /service-form/:serviceName that renders ServiceForm with the service name parameter. Ensure this route is protected so only authenticated customers can access it."
+        },
+        {
+          "path": "frontend/src/hooks/useServiceSubmission.ts",
+          "operation": "create",
+          "description": "Create custom hook for service form submission. Use blob-storage component ExternalBlob.fromBytes to upload document and track upload progress. Call backend submitOrder with all form data and the uploaded documentKey. Return submission status and any errors. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Build real-time Admin Dashboard listing all submissions with Accept/Reject actions",
+      "acceptanceCriteria": [
+        "Admin dashboard is only accessible after admin login",
+        "All submitted forms are listed with customer name, address, service, document preview, date & time",
+        "Accept button updates order status to next stage",
+        "Reject button updates order status to Rejected",
+        "Dashboard polls or re-fetches to reflect new submissions in near real-time"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminDashboard.tsx",
+          "operation": "create",
+          "description": "Create AdminDashboard component that fetches all orders via backend getAllOrders. Display each order as a card showing customer name, address, service name, document preview (use blob-storage ExternalBlob.getDirectURL to display image/PDF icon), and submission date/time. Include Accept (green checkmark) and Reject (red cross) buttons. Accept calls backend updateOrderStatus(orderId, 'Payment Completed'). Reject calls backend updateOrderStatus(orderId, 'Rejected'). Poll for updates every 5 seconds or use a manual refresh button. Use authorization component to guard access (admin-only). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /admin-dashboard that renders AdminDashboard. Protect this route so only authenticated admins can access it. Wire this route to the 'Dashboard' tab in the bottom navigation (visible only when admin is logged in)."
+        },
+        {
+          "path": "frontend/src/hooks/useAdminOrders.ts",
+          "operation": "create",
+          "description": "Create custom hook for fetching and managing admin orders. Use React Query to fetch orders via backend getAllOrders with polling enabled (refetchInterval: 5000). Provide updateOrderStatus function that calls backend updateOrderStatus and invalidates the query cache. Use authorization component to ensure admin-only access. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Implement dual-mode payment system: Permanent QR and Auto-Generate QR",
+      "acceptanceCriteria": [
+        "Admin panel has a QR management section with Permanent QR upload and Auto-Generate QR tabs",
+        "Permanent QR: admin-uploaded QR image is stored and displayed to all customers",
+        "Auto QR: admin inputs amount and a UPI QR code is generated and shown to customer",
+        "Admin can confirm payment for any order, moving its status to Payment Completed",
+        "Payment screen shows correct QR based on the active mode"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminQRManagement.tsx",
+          "operation": "create",
+          "description": "Create AdminQRManagement component accessible from admin panel with two tabs: Permanent QR and Auto QR. Permanent QR tab allows admin to upload a QR image using blob-storage ExternalBlob, then calls backend setPermQR with the documentKey and amount=0. Pre-load the provided ICICI Bank PhonePe QR image (frontend/public/assets/generated/icici-qr.dim_512x512.png or a stored base64) as the default. Auto QR tab allows admin to input an amount, then generates a UPI QR code using a library like qrcode.react or qrcode encoding a UPI deep-link string (upi://pay?...). Call backend setPermQR with empty key and the specified amount. Use authorization component to guard admin-only access. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/PaymentScreen.tsx",
+          "operation": "create",
+          "description": "Create PaymentScreen component for customers. Fetch current QR settings via backend getQRSettings. If permanentQrKey is set, display the permanent QR image using blob-storage ExternalBlob.getDirectURL. If autoQrAmount > 0, generate and display a UPI QR code dynamically. Show instructions for scanning and paying. After payment, the customer waits for admin confirmation. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /payment/:orderId that renders PaymentScreen. Add route for /admin-qr that renders AdminQRManagement (admin-only). Wire payment screen into the order flow after form submission."
+        },
+        {
+          "path": "frontend/src/components/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a 'Confirm Payment' button for each order in the dashboard. On click, call backend confirmPayment(orderId) to mark payment as completed and update order status."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add Flipkart-style 4-stage order tracking for each service application",
+      "acceptanceCriteria": [
+        "Order tracking shows 4 stages as a visual stepper",
+        "Completed stages appear highlighted/filled; future stages are grayed out",
+        "Active stage is visually distinct",
+        "Order status in the backend maps to one of the 4 stages",
+        "Customers can access tracking for their submitted orders"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/OrderTracking.tsx",
+          "operation": "create",
+          "description": "Create OrderTracking component that displays a horizontal progress stepper with 4 stages: Form Submitted, Payment Completed, Processing (Admin Working), Filling Completed. Fetch order details via backend getOrdersByCustomer or by orderId. Map backend status string to one of the 4 stages. Highlight completed stages, show active stage distinctly, and gray out future stages. Use icons and connecting lines for a Flipkart-style visual."
+        },
+        {
+          "path": "frontend/src/components/MyOrders.tsx",
+          "operation": "create",
+          "description": "Create MyOrders component that lists all orders for the logged-in customer via backend getOrdersByCustomer(customerId). Each order card shows service name, submission date, and current status. Tapping an order card navigates to /order-tracking/:orderId."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /my-orders that renders MyOrders. Add route for /order-tracking/:orderId that renders OrderTracking. Wire /my-orders to the 'My Orders' tab in the bottom navigation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Implement auto-generated receipt shown when order reaches Filling Completed",
+      "acceptanceCriteria": [
+        "Receipt is auto-shown when order status is Filling Completed",
+        "Receipt displays all required fields: centre name, service, amount, date/time, payment status",
+        "Receipt has a professional styled layout with Navy Blue & Silver theme",
+        "Receipt can be printed or downloaded via browser print dialog"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Receipt.tsx",
+          "operation": "create",
+          "description": "Create Receipt component that displays a professional invoice-style layout with Navy Blue header and Silver accents. Include: 'Vijay Online Centre' header, Service Name, Amount Paid, Date & Time, Payment Status. Render the receipt when an order's status is 'Filling Completed'. Provide a Print button that triggers window.print() to allow browser-based print/download."
+        },
+        {
+          "path": "frontend/src/components/OrderTracking.tsx",
+          "operation": "modify",
+          "description": "If the order status is 'Filling Completed', display the Receipt component inline or as a modal. Provide a button to view/print the receipt."
+        },
+        {
+          "path": "frontend/src/components/MyOrders.tsx",
+          "operation": "modify",
+          "description": "For orders with status 'Filling Completed', show a 'View Receipt' button on the order card that navigates to /receipt/:orderId."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /receipt/:orderId that renders Receipt component for the specified order."
+        }
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "summary": "Add Vijay AI chatbot assistant with floating button and rule-based responses",
+      "acceptanceCriteria": [
+        "Floating chat button is visible on all screens",
+        "Chatbot panel opens with Vijay AI branding",
+        "Responds in Hindi or English based on user's message language",
+        "Provides helpful pre-defined responses for services, payments, tracking, and contact",
+        "Has a close/minimize button"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VijayAIChatbot.tsx",
+          "operation": "create",
+          "description": "Create VijayAIChatbot component with a floating chat button fixed at the bottom-right corner on all screens. On click, open a slide-up chat panel with header 'Vijay AI — 24x7 Assistant'. Implement a rule-based chatbot that detects keywords in user messages (Hindi or English) and provides pre-defined responses for: how to apply for services, payment help, order tracking, contact info, and general guidance. Include a close/minimize button to hide the panel."
+        },
+        {
+          "path": "frontend/src/data/chatbotResponses.ts",
+          "operation": "create",
+          "description": "Create a data file with pre-defined chatbot responses in Hindi and English. Map keywords to response text. Include responses for: service application process, payment instructions, order tracking help, contact details, and platform overview."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Render VijayAIChatbot component globally so the floating chat button is accessible from all screens."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Add Contact section with WhatsApp, Call, and Google Maps options",
+      "acceptanceCriteria": [
+        "WhatsApp button opens wa.me/918173064549 in a new tab",
+        "Call button triggers tel:+918173064549",
+        "Google Maps button opens maps search in a new tab",
+        "Phone number is clearly visible",
+        "Contact section is reachable from the bottom navigation"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Contact.tsx",
+          "operation": "create",
+          "description": "Create Contact component that displays phone number +91 81730 64549 prominently. Include three buttons: (1) WhatsApp Chat opens https://wa.me/918173064549 in new tab, (2) Direct Call triggers tel:+918173064549, (3) Google Maps opens https://maps.google.com with a search query for the business. Style buttons with icons and Navy Blue/Silver theme."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /contact that renders Contact component. Wire this route to the 'Contact' tab in the bottom navigation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Apply premium Navy Blue & Silver theme with bottom navigation and mobile-first layout",
+      "acceptanceCriteria": [
+        "All screens use Navy Blue and Silver color palette consistently",
+        "Bottom navigation bar present with at least 4 tabs",
+        "Page/route transitions have smooth animations",
+        "Layout renders correctly at 360px viewport width without horizontal scroll",
+        "No viewport zoom issues (correct meta viewport tag set)",
+        "Admin dashboard tab only visible when logged in as admin"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Apply Navy Blue (#0A1628, #0D2137) and Silver (#C0C0C0, #E8E8E8) color palette globally via CSS variables. Set background colors, text colors, button styles, and card styles to match the theme. Use professional system sans-serif fonts or include Google Fonts (e.g., Inter, Poppins). Ensure all text is legible on Navy Blue backgrounds using Silver text."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind config to include Navy Blue and Silver as custom color variables (e.g., primary: #0A1628, secondary: #C0C0C0). Define spacing, border-radius, and shadow utilities optimized for a premium mobile-first design."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "create",
+          "description": "Create Layout component that wraps the app content and includes a bottom navigation bar with tabs: Home, Services, My Orders, Contact, and (conditionally) Dashboard. Use icons for each tab. Show Dashboard tab only when the admin is logged in. Apply Navy Blue background to the navigation bar with Silver active tab indicator."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wrap all authenticated routes in the Layout component to provide bottom navigation. Add smooth page transition animations using React Router transitions or CSS animations. Ensure routes are protected based on authentication state (customer vs admin)."
+        },
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Set the viewport meta tag to <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'> to prevent zoom issues on mobile devices. Ensure the layout is mobile-first and optimized for 360px viewport width."
+        },
+        {
+          "path": "frontend/src/components/Home.tsx",
+          "operation": "create",
+          "description": "Create Home component as the landing page after customer login. Display a welcome message, quick access buttons to Services and My Orders, and a hero section with branding. Use the generated splash-bg.dim_1080x1920.png as a background or decorative element. Keep the design clean and optimized for mobile."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /home that renders Home component. Wire this route to the 'Home' tab in the bottom navigation. Make /home the default landing page after customer login."
+        }
+      ]
+    }
+  ]
+}

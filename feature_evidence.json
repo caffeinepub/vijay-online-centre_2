@@ -1,0 +1,269 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-create-a-splash-screen-that-displays-the-vijay-online-centre-logo-generated-asset-app-name-vijay-online-centre-and-the-hindi-welcome-message-the-splash-screen-should-display-for-2-seconds-with-a-fade-in-animation-before-transitioning-to-the-login-screen",
+      "featureTitle": "Create a splash screen that displays the Vijay Online Centre logo (generated asset), app name 'Vijay Online Centre', and the Hindi welcome message 'स्वागत है आपका हमारे विजय ऑनलाइन प्लेटफ़ॉर्म पर'. The splash screen should display for ~2 seconds with a fade-in animation before transitioning to the login screen.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/SplashScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-permanent-admin-login-screen-with-hardcoded-credentials-user-id-vijay-123user-password-vijay-2026-admin-session-must-never-expire-and-must-provide-unlimited-lifetime-access-store-admin-session-in-local-state-so-the-admin-remains-logged-in-across-page-reloads",
+      "featureTitle": "Implement a permanent Admin Login screen with hardcoded credentials: User ID 'vijay@123user', Password 'vijay@2026'. Admin session must never expire and must provide unlimited lifetime access. Store admin session in local state so the admin remains logged in across page reloads.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/AdminLogin.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-customer-login-screen-with-two-options-1-manual-login-using-mobile-number-a-pin-password-and-2-otp-based-login-using-mobile-number-simulated-otp-flow-since-real-sms-is-not-supported-display-otp-in-app-for-demo-customer-accounts-must-never-expire-and-support-unlimited-registered-users-stored-in-the-motoko-backend",
+      "featureTitle": "Implement a Customer Login screen with two options: (1) Manual login using mobile number + a PIN/password, and (2) OTP-based login using mobile number (simulated OTP flow since real SMS is not supported — display OTP in-app for demo). Customer accounts must never expire and support unlimited registered users stored in the Motoko backend.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/CustomerLogin.tsx",
+        "frontend/src/components/LoginSelection.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-searchable-service-catalog-displaying-all-32-services-1-aay-praman-patra-2-jati-praman-patra-3-niwas-praman-patra-4-janm-praman-patra-5-mrityu-praman-patra-6-naya-pan-card-7-pan-card-correction-8-aadhar-card-update-9-voter-id-new-10-ration-card-online-11-ayushman-card-12-driving-license-13-naya-passport-14-pf-withdrawal-kyc-15-e-shram-card-16-pension-kyc-17-bijli-bill-payment-18-gadi-ka-bima-19-railway-ticket-20-flight-ticket-21-pm-kisan-registration-22-vridha-pension-23-vidhwa-pension-24-divyang-pension-25-kanya-sumangala-yojana-26-up-scholarship-27-charitra-praman-patra-28-police-verification-29-bhulekh-30-shadi-registration-31-udyam-registration-32-gazette-notification-include-a-real-time-search-filter-input-at-the-top-each-service-is-displayed-as-a-tappable-card",
+      "featureTitle": "Build a searchable service catalog displaying all 32 services: (1) Aay Praman Patra, (2) Jati Praman Patra, (3) Niwas Praman Patra, (4) Janm Praman Patra, (5) Mrityu Praman Patra, (6) Naya Pan Card, (7) Pan Card Correction, (8) Aadhar Card Update, (9) Voter ID New, (10) Ration Card Online, (11) Ayushman Card, (12) Driving License, (13) Naya Passport, (14) PF Withdrawal/KYC, (15) E-Shram Card, (16) Pension KYC, (17) Bijli Bill Payment, (18) Gadi ka Bima, (19) Railway Ticket, (20) Flight Ticket, (21) PM Kisan Registration, (22) Vridha Pension, (23) Vidhwa Pension, (24) Divyang Pension, (25) Kanya Sumangala Yojana, (26) UP Scholarship, (27) Charitra Praman Patra, (28) Police Verification, (29) Bhulekh, (30) Shadi Registration, (31) Udyam Registration, (32) Gazette Notification. Include a real-time search/filter input at the top. Each service is displayed as a tappable card.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/ServiceCatalog.tsx",
+        "frontend/src/data/services.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-service-application-form-for-each-of-the-32-services-the-form-must-include-name-text-mobile-number-numeric-address-textarea-document-upload-accepts-image-or-pdf-file-stored-as-base64-in-backend-and-a-submit-button-on-submission-save-the-form-entry-to-the-motoko-backend-with-a-timestamp-assigned-service-name-customer-info-and-initial-status-form-submitted",
+      "featureTitle": "Create a service application form for each of the 32 services. The form must include: Name (text), Mobile Number (numeric), Address (textarea), Document Upload (accepts image or PDF file, stored as base64 in backend), and a Submit button. On submission, save the form entry to the Motoko backend with a timestamp, assigned service name, customer info, and initial status 'Form Submitted'.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/ServiceForm.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-real-time-admin-dashboard-accessible-only-when-logged-in-as-admin-that-lists-all-submitted-service-forms-each-entry-must-show-customer-name-address-selected-service-uploaded-document-preview-image-thumbnail-or-pdf-icon-date-time-of-submission-each-entry-must-have-two-action-buttons-accept-green-checkmark-and-reject-red-cross-accepting-moves-the-order-status-to-payment-completed-or-processing-rejecting-marks-it-rejected-the-dashboard-must-refresh-to-show-new-submissions-without-a-full-page-reload",
+      "featureTitle": "Build a real-time Admin Dashboard (accessible only when logged in as admin) that lists all submitted service forms. Each entry must show: Customer Name, Address, Selected Service, Uploaded document preview (image thumbnail or PDF icon), Date & Time of submission. Each entry must have two action buttons: Accept (green checkmark) and Reject (red cross). Accepting moves the order status to 'Payment Completed' or 'Processing'; Rejecting marks it 'Rejected'. The dashboard must refresh to show new submissions without a full page reload.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/AdminDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-dual-mode-payment-system-1-permanent-qr-mode-admin-can-upload-a-qr-image-once-from-the-admin-panel-this-same-qr-image-is-stored-in-the-backend-and-always-displayed-to-customers-on-the-payment-screen-the-uploaded-upi-qr-from-the-user-s-provided-image-img-20260228-093258-jpg-icici-bank-phonepe-qr-should-be-used-as-the-default-pre-loaded-qr-2-auto-qr-generate-mode-admin-enters-a-specific-amount-the-frontend-generates-a-upi-payment-qr-code-dynamically-using-a-qr-library-encoding-a-upi-deep-link-string-after-the-customer-scans-and-pays-the-admin-can-manually-confirm-payment-which-advances-the-order-status-to-payment-completed",
+      "featureTitle": "Implement a dual-mode payment system. (1) Permanent QR Mode: Admin can upload a QR image once from the admin panel; this same QR image is stored in the backend and always displayed to customers on the payment screen. The uploaded UPI QR from the user's provided image (IMG_20260228_093258.jpg — ICICI Bank PhonePe QR) should be used as the default pre-loaded QR. (2) Auto QR Generate Mode: Admin enters a specific amount; the frontend generates a UPI payment QR code dynamically using a QR library encoding a UPI deep-link string. After the customer scans and pays, the admin can manually confirm payment, which advances the order status to 'Payment Completed'.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/AdminDashboard.tsx",
+        "frontend/src/components/AdminQRManagement.tsx",
+        "frontend/src/components/PaymentScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-flipkart-style-4-stage-order-tracking-for-each-submitted-service-application-stages-in-order-1-form-submitted-2-payment-completed-3-processing-admin-working-4-filling-completed-display-a-horizontal-progress-stepper-with-icons-circles-and-connecting-lines-the-current-active-stage-is-highlighted-customers-can-view-their-order-tracking-from-my-orders-or-a-tracking-section",
+      "featureTitle": "Add Flipkart-style 4-stage order tracking for each submitted service application. Stages in order: (1) Form Submitted → (2) Payment Completed → (3) Processing (Admin Working) → (4) Filling Completed. Display a horizontal progress stepper with icons/circles and connecting lines. The current active stage is highlighted. Customers can view their order tracking from 'My Orders' or a tracking section.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/MyOrders.tsx",
+        "frontend/src/components/OrderTracking.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-an-auto-generated-receipt-that-is-shown-and-printable-downloadable-as-html-when-an-order-reaches-filling-completed-status-the-receipt-must-include-vijay-online-centre-header-service-name-amount-paid-date-time-and-payment-status-style-the-receipt-like-a-professional-invoice-with-the-navy-blue-silver-theme",
+      "featureTitle": "Implement an auto-generated receipt that is shown (and printable/downloadable as HTML) when an order reaches 'Filling Completed' status. The receipt must include: Vijay Online Centre header, Service Name, Amount Paid, Date & Time, and Payment Status. Style the receipt like a professional invoice with the Navy Blue & Silver theme.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/MyOrders.tsx",
+        "frontend/src/components/OrderTracking.tsx",
+        "frontend/src/components/Receipt.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-vijay-ai-chatbot-assistant-accessible-via-a-floating-chat-button-on-all-screens-the-chatbot-must-support-both-hindi-and-english-implement-a-rule-based-chatbot-with-pre-defined-responses-covering-how-to-apply-for-services-payment-help-order-tracking-help-contact-information-and-general-guidance-about-the-platform-display-it-as-a-slide-up-chat-panel-with-a-vijay-ai-24x7-assistant-header",
+      "featureTitle": "Add a 'Vijay AI' chatbot assistant accessible via a floating chat button on all screens. The chatbot must support both Hindi and English. Implement a rule-based chatbot with pre-defined responses covering: how to apply for services, payment help, order tracking help, contact information, and general guidance about the platform. Display it as a slide-up chat panel with a 'Vijay AI — 24x7 Assistant' header.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/VijayAIChatbot.tsx",
+        "frontend/src/data/chatbotResponses.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-10"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-contact-section-accessible-from-bottom-navigation-or-a-dedicated-screen-with-three-options-1-whatsapp-chat-button-that-opens-wa-me-918173064549-2-direct-call-button-that-triggers-tel-918173064549-3-google-maps-location-button-that-opens-maps-google-com-with-a-search-query-for-the-business-display-the-phone-number-91-81730-64549-prominently",
+      "featureTitle": "Add a Contact section (accessible from bottom navigation or a dedicated screen) with three options: (1) WhatsApp Chat button that opens wa.me/918173064549, (2) Direct Call button that triggers tel:+918173064549, (3) Google Maps location button that opens maps.google.com with a search query for the business. Display the phone number +91 81730 64549 prominently.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/Contact.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-11"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-premium-navy-blue-0a1628-0d2137-and-silver-c0c0c0-e8e8e8-ui-theme-consistently-across-all-screens-use-a-bottom-navigation-bar-with-icons-for-home-services-my-orders-contact-and-admin-only-dashboard-include-smooth-page-transition-animations-and-card-hover-press-effects-use-professional-fonts-system-sans-serif-or-google-fonts-equivalent-ensure-the-layout-is-mobile-first-and-optimized-for-small-screens-360px-width-minimum-without-any-zoom-or-overflow-issues",
+      "featureTitle": "Apply a premium Navy Blue (#0A1628 / #0D2137) and Silver (#C0C0C0 / #E8E8E8) UI theme consistently across all screens. Use a bottom navigation bar with icons for: Home, Services, My Orders, Contact, and (admin-only) Dashboard. Include smooth page transition animations and card hover/press effects. Use professional fonts (system sans-serif or Google Fonts equivalent). Ensure the layout is mobile-first and optimized for small screens (360px width minimum) without any zoom or overflow issues.",
+      "files": [
+        "frontend/index.html",
+        "frontend/src/App.tsx",
+        "frontend/src/components/Home.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-12"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

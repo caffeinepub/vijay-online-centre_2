@@ -1,0 +1,12 @@
+{
+  "frontend/src/lib/blobStorage.ts": "Blob storage utility class that converts raw bytes or URLs into usable blob URLs, with the `ArrayBufferLike` to `ArrayBuffer` cast fixed by routing through `unknown` to satisfy TypeScript's strict overlap check.",
+  "frontend/src/App.tsx": "Main application component with state-machine-based screen navigation, wrapping all screens in `AuthProvider` and routing between splash, login, and main app views with a tab-based layout.",
+  "frontend/src/components/OrderTracking.tsx": "Flipkart-style 4-stage order progress stepper showing Form Submitted → Payment Done → Processing → Completed, with animated progress line and stage indicators.",
+  "frontend/src/components/AdminDashboard.tsx": "Admin-only dashboard listing all service orders with expandable cards, filter tabs by status, and Accept/Reject/Confirm Payment action buttons with real-time polling.",
+  "frontend/src/components/PaymentScreen.tsx": "Payment screen showing either the admin-uploaded permanent QR image or a canvas-generated UPI QR code with payment instructions for customers.",
+  "frontend/src/components/AdminQRManagement.tsx": "Admin panel for managing payment QR codes with two tabs — Permanent QR (upload image) and Auto QR (set fixed amount for dynamic generation).",
+  "frontend/src/components/Receipt.tsx": "Professional invoice-style receipt component with Navy Blue header, order details, and a print button, shown when order status reaches \"Filling Completed\".",
+  "frontend/src/components/Contact.tsx": "Contact page with prominent phone number display and action buttons for WhatsApp chat, direct call, and Google Maps navigation.",
+  "frontend/src/components/VijayAIChatbot.tsx": "Floating chatbot button with slide-up chat panel implementing rule-based Hindi/English responses for services, payments, tracking, and contact queries.",
+  "frontend/src/components/Layout.tsx": "App shell with top bar (logo, user info, logout), scrollable content area, bottom navigation tabs (context-aware for admin vs customer), and embedded VijayAIChatbot."
+}

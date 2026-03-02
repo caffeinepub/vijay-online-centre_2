@@ -14,19 +14,14 @@ export interface AdminQRSettings {
   'autoQrAmount' : bigint,
   'permanentQrKey' : string,
 }
-export interface PaymentConfirmation {
-  'orderId' : bigint,
-  'timestamp' : bigint,
-  'confirmedByAdmin' : boolean,
-}
 export interface ServiceOrder {
   'status' : string,
   'serviceName' : string,
-  'documentKey' : string,
   'name' : string,
+  'documentDataBase64' : string,
+  'photoDataBase64' : string,
   'orderId' : bigint,
   'address' : string,
-  'timestamp' : bigint,
   'customerId' : string,
   'mobile' : string,
   'amount' : bigint,
@@ -64,64 +59,23 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  /**
-   * / Admin-only: confirm that a payment has been received for an order,
-   * / and advance the order status to 'Payment Completed'.
-   */
-  'confirmPayment' : ActorMethod<[bigint], undefined>,
-  /**
-   * / Admin-only: retrieve all submitted orders.
-   */
   'getAllOrders' : ActorMethod<[], Array<ServiceOrder>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  /**
-   * / Any caller may query orders for a given customerId.
-   * / The customerId acts as the app-level authorization token.
-   * / Admins (IC-level) may also query any customer's orders.
-   */
+  'getOrderById' : ActorMethod<[bigint], [] | [ServiceOrder]>,
   'getOrdersByCustomer' : ActorMethod<[string], Array<ServiceOrder>>,
-  /**
-   * / Any caller may check the payment confirmation for an order.
-   * / The customerId in the order acts as the app-level authorization token.
-   */
-  'getPaymentConfirmation' : ActorMethod<[bigint], [] | [PaymentConfirmation]>,
-  /**
-   * / Anyone may retrieve the permanent QR image (needed to display payment QR to customers).
-   */
   'getPermQR' : ActorMethod<[], string>,
-  /**
-   * / Anyone may retrieve the full QR settings (amount needed for auto-QR generation).
-   */
-  'getQRSettings' : ActorMethod<[], AdminQRSettings>,
+  'getQRSettings' : ActorMethod<[], [] | [AdminQRSettings]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  /**
-   * / Anyone (including guests) may attempt to log in.
-   */
   'loginCustomer' : ActorMethod<[string, string], boolean>,
-  /**
-   * / Anyone (including guests) may register a new customer account.
-   */
   'registerCustomer' : ActorMethod<[string, string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  /**
-   * / Admin-only: set the permanent QR image and/or auto-QR amount.
-   */
   'setPermQR' : ActorMethod<[string, bigint], undefined>,
-  /**
-   * / The application uses a mobile/password authentication system independent of
-   * / Internet Identity. Customers are identified by their customerId (mobile number).
-   * / No IC-level role check is applied here; the customerId passed by the frontend
-   * / represents the logged-in customer's identity within the app's own auth system.
-   */
   'submitOrder' : ActorMethod<
-    [string, string, string, string, string, string, bigint],
+    [string, string, string, string, string, string, string, bigint],
     bigint
   >,
-  /**
-   * / Admin-only: update the status of a service order.
-   */
   'updateOrderStatus' : ActorMethod<[bigint, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

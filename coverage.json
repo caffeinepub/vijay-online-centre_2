@@ -1,75 +1,89 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T02:15:06.412Z",
+  "generatedAt": "2026-03-02T07:10:29.734Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement persistent customer session in AuthContext so that once a customer logs in, their session is restored automatically on every page load (using localStorage) and they are NOT redirected to the login screen unless they explicitly log out.",
+        "summary": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/contexts/AuthContext.tsx",
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/components/AdminQRManagement.tsx",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
           "frontend/src/contexts/AuthContext.tsx",
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/components/AdminQRManagement.tsx",
           "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the Logout button in the Layout component so that clicking it clears the customer or admin session from both AuthContext state and localStorage, then navigates the user back to the login/selection screen.",
+        "summary": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/contexts/AuthContext.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/ServiceForm.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/contexts/AuthContext.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/ServiceForm.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Fix the 'Unauthorized: Only authenticated users can submit orders' error in ServiceForm and any other form submission flows. Ensure that after a customer logs in, the authenticated user's principal or customer ID is correctly attached to every backend call (submitOrder and any similar mutations in useQueries.ts), so forms like 'Niwas Praman Patra' submit successfully without an unauthorized error.",
+        "summary": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/contexts/AuthContext.tsx"
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/components/OrderTracking.tsx",
+          "frontend/src/components/Receipt.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/contexts/AuthContext.tsx"
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/components/OrderTracking.tsx",
+          "frontend/src/components/Receipt.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/CustomerLogin.tsx",
-    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/AdminDashboard.tsx",
+    "frontend/src/components/AdminQRManagement.tsx",
+    "frontend/src/components/OrderTracking.tsx",
+    "frontend/src/components/Receipt.tsx",
     "frontend/src/components/ServiceForm.tsx",
     "frontend/src/contexts/AuthContext.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

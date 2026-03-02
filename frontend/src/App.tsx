@@ -31,12 +31,10 @@ type Screen =
 function AppContent() {
   const { isAdmin, isAuthenticated, customerSession } = useAuth();
   const [screen, setScreen] = useState<Screen>({ type: 'splash' });
-  // Track whether splash has completed at least once
   const splashDoneRef = useRef(false);
 
   // When auth state changes to unauthenticated (after logout), redirect to login-selection
   useEffect(() => {
-    // Only redirect after splash is done and we're in an authenticated screen
     if (!splashDoneRef.current) return;
     if (!isAuthenticated) {
       setScreen({ type: 'login-selection' });
@@ -125,7 +123,6 @@ function AppContent() {
 
   // Service form (outside layout for full screen)
   if (screen.type === 'service-form') {
-    // Guard: if not authenticated, redirect to login
     if (!isAuthenticated || (!customerSession && !isAdmin)) {
       return (
         <LoginSelection

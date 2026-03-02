@@ -1,287 +1,286 @@
 import React, { useState } from 'react';
-import { RefreshCw, CheckCircle, XCircle, CreditCard, ChevronDown, ChevronUp, FileText, Settings } from 'lucide-react';
-import { useGetAllOrders, useUpdateOrderStatus, useConfirmPayment } from '../hooks/useQueries';
-import type { ServiceOrder } from '../backend';
+import { useAuth } from '../contexts/AuthContext';
+import { useGetAllOrders, useUpdateOrderStatus } from '../hooks/useQueries';
+import { ServiceOrder } from '../backend';
 
 interface AdminDashboardProps {
-  onNavigateQR: () => void;
+  onNavigateQR?: () => void;
 }
 
-function formatDate(timestamp: bigint): string {
-  const ms = Number(timestamp) / 1_000_000;
-  return new Date(ms).toLocaleDateString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'Form Submitted': return 'bg-blue-100 text-blue-800';
+    case 'Under Review': return 'bg-yellow-100 text-yellow-800';
+    case 'Accepted': return 'bg-green-100 text-green-800';
+    case 'Rejected': return 'bg-red-100 text-red-800';
+    case 'Payment Pending': return 'bg-orange-100 text-orange-800';
+    case 'Payment Confirmed': return 'bg-purple-100 text-purple-800';
+    case 'Completed': return 'bg-gray-100 text-gray-800';
+    default: return 'bg-gray-100 text-gray-600';
+  }
 }
 
-const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
-  'Form Submitted': { color: 'oklch(0.78 0.12 85)', bg: 'oklch(0.78 0.12 85 / 15%)' },
-  'Payment Completed': { color: 'oklch(0.6 0.15 200)', bg: 'oklch(0.6 0.15 200 / 15%)' },
-  'Processing': { color: 'oklch(0.65 0.15 300)', bg: 'oklch(0.65 0.15 300 / 15%)' },
-  'Filling Completed': { color: 'oklch(0.6 0.15 145)', bg: 'oklch(0.6 0.15 145 / 15%)' },
-  'Rejected': { color: 'oklch(0.7 0.15 27)', bg: 'oklch(0.7 0.15 27 / 15%)' },
-};
+function openAttachment(dataBase64: string, defaultMime = 'image/jpeg') {
+  if (!dataBase64) return;
+  let dataUrl = dataBase64;
+  if (!dataBase64.startsWith('data:')) {
+    dataUrl = `data:${defaultMime};base64,${dataBase64}`;
+  }
+  const win = window.open();
+  if (win) {
+    win.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;" />`);
+    win.document.title = 'Attachment';
+  }
+}
 
-function OrderCard({ order, onAccept, onReject, onConfirmPayment, isUpdating }: {
+interface OrderCardProps {
   order: ServiceOrder;
-  onAccept: (id: bigint) => void;
-  onReject: (id: bigint) => void;
-  onConfirmPayment: (id: bigint) => void;
-  isUpdating: boolean;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const statusCfg = STATUS_COLORS[order.status] || STATUS_COLORS['Form Submitted'];
+}
+
+function OrderCard({ order }: OrderCardProps) {
+  const updateStatus = useUpdateOrderStatus();
+  const [cardMessage, setCardMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    setCardMessage(null);
+    try {
+      await updateStatus.mutateAsync({ orderId: order.orderId, status: newStatus });
+      setCardMessage({ type: 'success', text: `Order ${newStatus} successfully!` });
+      setTimeout(() => setCardMessage(null), 3000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Don't show re-login messages; show a friendly error instead
+      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('admin')) {
+        setCardMessage({ type: 'error', text: 'Action failed. Please refresh and try again.' });
+      } else {
+        setCardMessage({ type: 'error', text: 'Failed to update status. Please try again.' });
+      }
+      setTimeout(() => setCardMessage(null), 4000);
+    }
+  };
+
+  const isPending = updateStatus.isPending;
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-3"
-      style={{ background: 'oklch(0.18 0.05 240)', border: '1px solid oklch(0.28 0.07 240)' }}>
-      {/* Header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 text-left flex items-start justify-between gap-2"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ background: statusCfg.bg, color: statusCfg.color }}>
-              {order.status}
-            </span>
-            <span className="text-xs" style={{ color: 'oklch(0.45 0.02 240)' }}>
-              #{order.orderId.toString()}
-            </span>
-          </div>
-          <p className="text-sm font-bold truncate" style={{ color: 'oklch(0.97 0.005 240)' }}>
-            {order.serviceName}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: 'oklch(0.72 0.015 240)' }}>
-            {order.name} · {order.mobile}
-          </p>
-          <p className="text-xs" style={{ color: 'oklch(0.45 0.02 240)' }}>
-            {formatDate(order.timestamp)}
-          </p>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-3">
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <span className="font-bold text-gray-800 text-sm">Order #{order.orderId.toString()}</span>
+          <span className="ml-2 text-xs text-gray-500">{order.serviceName}</span>
         </div>
-        <div className="flex-shrink-0 mt-1">
-          {expanded
-            ? <ChevronUp size={16} style={{ color: 'oklch(0.62 0.015 240)' }} />
-            : <ChevronDown size={16} style={{ color: 'oklch(0.62 0.015 240)' }} />
-          }
-        </div>
-      </button>
+        <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(order.status)}`}>
+          {order.status}
+        </span>
+      </div>
 
-      {/* Expanded Details */}
-      {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: 'oklch(0.28 0.07 240)' }}>
-          <div className="pt-3">
-            <p className="text-xs font-medium mb-1" style={{ color: 'oklch(0.62 0.015 240)' }}>ADDRESS</p>
-            <p className="text-sm" style={{ color: 'oklch(0.82 0.012 240)' }}>{order.address}</p>
-          </div>
+      <div className="text-sm text-gray-600 mb-1">
+        <span className="font-medium">{order.name}</span> · {order.mobile}
+      </div>
+      <div className="text-xs text-gray-500 mb-2 truncate">{order.address}</div>
+      {order.amount > 0 && (
+        <div className="text-sm font-semibold text-green-700 mb-2">₹{order.amount.toString()}</div>
+      )}
 
-          {order.documentKey && (
-            <div>
-              <p className="text-xs font-medium mb-2" style={{ color: 'oklch(0.62 0.015 240)' }}>DOCUMENT</p>
-              <div className="flex items-center gap-2 p-3 rounded-xl"
-                style={{ background: 'oklch(0.22 0.06 240)' }}>
-                <FileText size={20} style={{ color: 'oklch(0.78 0.12 85)' }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs truncate" style={{ color: 'oklch(0.82 0.012 240)' }}>
-                    Document uploaded
-                  </p>
-                </div>
-                {order.documentKey.startsWith('blob:') || order.documentKey.startsWith('http') ? (
-                  <a href={order.documentKey} target="_blank" rel="noopener noreferrer"
-                    className="text-xs px-2 py-1 rounded-lg"
-                    style={{ background: 'oklch(0.35 0.08 240)', color: 'oklch(0.97 0.005 240)' }}>
-                    View
-                  </a>
-                ) : null}
-              </div>
-            </div>
-          )}
-
-          {Number(order.amount) > 0 && (
-            <div>
-              <p className="text-xs font-medium mb-1" style={{ color: 'oklch(0.62 0.015 240)' }}>AMOUNT</p>
-              <p className="text-sm font-bold" style={{ color: 'oklch(0.78 0.12 85)' }}>
-                ₹{order.amount.toString()}
-              </p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            {order.status === 'Form Submitted' && (
-              <>
-                <button
-                  onClick={() => onAccept(order.orderId)}
-                  disabled={isUpdating}
-                  className="py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
-                  style={{ background: 'oklch(0.5 0.15 145 / 20%)', color: 'oklch(0.6 0.15 145)', border: '1px solid oklch(0.5 0.15 145 / 40%)' }}>
-                  <CheckCircle size={14} /> Accept
-                </button>
-                <button
-                  onClick={() => onReject(order.orderId)}
-                  disabled={isUpdating}
-                  className="py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
-                  style={{ background: 'oklch(0.577 0.245 27.325 / 20%)', color: 'oklch(0.7 0.15 27)', border: '1px solid oklch(0.577 0.245 27.325 / 40%)' }}>
-                  <XCircle size={14} /> Reject
-                </button>
-              </>
-            )}
-
-            {order.status === 'Payment Completed' && (
-              <button
-                onClick={() => onAccept(order.orderId)}
-                disabled={isUpdating}
-                className="col-span-2 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
-                style={{ background: 'oklch(0.65 0.15 300 / 20%)', color: 'oklch(0.65 0.15 300)', border: '1px solid oklch(0.65 0.15 300 / 40%)' }}>
-                <Settings size={14} /> Mark as Processing
-              </button>
-            )}
-
-            {order.status === 'Processing' && (
-              <button
-                onClick={() => onAccept(order.orderId)}
-                disabled={isUpdating}
-                className="col-span-2 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
-                style={{ background: 'oklch(0.6 0.15 145 / 20%)', color: 'oklch(0.6 0.15 145)', border: '1px solid oklch(0.6 0.15 145 / 40%)' }}>
-                <CheckCircle size={14} /> Mark as Completed
-              </button>
-            )}
-
-            {order.status === 'Form Submitted' && (
-              <button
-                onClick={() => onConfirmPayment(order.orderId)}
-                disabled={isUpdating}
-                className="col-span-2 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
-                style={{ background: 'oklch(0.6 0.15 200 / 20%)', color: 'oklch(0.6 0.15 200)', border: '1px solid oklch(0.6 0.15 200 / 40%)' }}>
-                <CreditCard size={14} /> Confirm Payment
-              </button>
-            )}
-          </div>
+      {cardMessage && (
+        <div className={`text-xs px-3 py-2 rounded-lg mb-2 font-medium ${
+          cardMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+        }`}>
+          {cardMessage.text}
         </div>
       )}
+
+      <div className="flex flex-wrap gap-2 mt-2">
+        {order.status === 'Form Submitted' || order.status === 'Under Review' ? (
+          <>
+            <button
+              onClick={() => handleStatusUpdate('Accepted')}
+              disabled={isPending}
+              className="flex-1 min-w-[80px] bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+            >
+              {isPending ? '...' : '✓ Accept'}
+            </button>
+            <button
+              onClick={() => handleStatusUpdate('Rejected')}
+              disabled={isPending}
+              className="flex-1 min-w-[80px] bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+            >
+              {isPending ? '...' : '✗ Reject'}
+            </button>
+          </>
+        ) : null}
+
+        {order.status === 'Accepted' && (
+          <button
+            onClick={() => handleStatusUpdate('Payment Pending')}
+            disabled={isPending}
+            className="flex-1 min-w-[100px] bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+          >
+            {isPending ? '...' : 'Set Payment Pending'}
+          </button>
+        )}
+
+        {order.status === 'Payment Pending' && (
+          <button
+            onClick={() => handleStatusUpdate('Payment Confirmed')}
+            disabled={isPending}
+            className="flex-1 min-w-[100px] bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+          >
+            {isPending ? '...' : 'Confirm Payment'}
+          </button>
+        )}
+
+        {order.status === 'Payment Confirmed' && (
+          <button
+            onClick={() => handleStatusUpdate('Completed')}
+            disabled={isPending}
+            className="flex-1 min-w-[80px] bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+          >
+            {isPending ? '...' : 'Mark Complete'}
+          </button>
+        )}
+
+        {order.photoDataBase64 && (
+          <button
+            onClick={() => openAttachment(order.photoDataBase64, 'image/jpeg')}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors border border-blue-200"
+          >
+            📷 Photo
+          </button>
+        )}
+
+        {order.documentDataBase64 && (
+          <button
+            onClick={() => openAttachment(order.documentDataBase64, 'application/pdf')}
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors border border-indigo-200"
+          >
+            📄 Document
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 export default function AdminDashboard({ onNavigateQR }: AdminDashboardProps) {
-  const { data: orders, isLoading, refetch, isFetching } = useGetAllOrders();
-  const updateStatus = useUpdateOrderStatus();
-  const confirmPayment = useConfirmPayment();
-  const [filter, setFilter] = useState<string>('all');
+  const { isAdminLoggedIn } = useAuth();
+  const { data: orders = [], isLoading, error, refetch } = useGetAllOrders();
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'accepted' | 'rejected' | 'completed'>('all');
 
-  const STATUS_FLOW: Record<string, string> = {
-    'Form Submitted': 'Payment Completed',
-    'Payment Completed': 'Processing',
-    'Processing': 'Filling Completed',
+  if (!isAdminLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+        <div className="text-4xl mb-4">🔒</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Admin Access Required</h2>
+        <p className="text-gray-500 text-sm text-center">Please login as admin to access the dashboard.</p>
+      </div>
+    );
+  }
+
+  const filteredOrders = orders.filter(order => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'pending') return order.status === 'Form Submitted' || order.status === 'Under Review';
+    if (activeTab === 'accepted') return order.status === 'Accepted' || order.status === 'Payment Pending' || order.status === 'Payment Confirmed';
+    if (activeTab === 'rejected') return order.status === 'Rejected';
+    if (activeTab === 'completed') return order.status === 'Completed';
+    return true;
+  });
+
+  const sortedOrders = [...filteredOrders].sort((a, b) => Number(b.orderId) - Number(a.orderId));
+
+  const stats = {
+    total: orders.length,
+    pending: orders.filter(o => o.status === 'Form Submitted' || o.status === 'Under Review').length,
+    accepted: orders.filter(o => o.status === 'Accepted' || o.status === 'Payment Pending' || o.status === 'Payment Confirmed').length,
+    completed: orders.filter(o => o.status === 'Completed').length,
   };
-
-  const handleAccept = async (orderId: bigint) => {
-    const order = orders?.find(o => o.orderId === orderId);
-    if (!order) return;
-    const nextStatus = STATUS_FLOW[order.status];
-    if (nextStatus) {
-      await updateStatus.mutateAsync({ orderId, status: nextStatus });
-    }
-  };
-
-  const handleReject = async (orderId: bigint) => {
-    await updateStatus.mutateAsync({ orderId, status: 'Rejected' });
-  };
-
-  const handleConfirmPayment = async (orderId: bigint) => {
-    await confirmPayment.mutateAsync(orderId);
-  };
-
-  const sortedOrders = [...(orders || [])].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-
-  const filteredOrders = filter === 'all'
-    ? sortedOrders
-    : sortedOrders.filter(o => o.status === filter);
-
-  const statusCounts = sortedOrders.reduce((acc, o) => {
-    acc[o.status] = (acc[o.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const filterOptions = [
-    { key: 'all', label: 'All', count: sortedOrders.length },
-    { key: 'Form Submitted', label: 'New', count: statusCounts['Form Submitted'] || 0 },
-    { key: 'Payment Completed', label: 'Paid', count: statusCounts['Payment Completed'] || 0 },
-    { key: 'Processing', label: 'Processing', count: statusCounts['Processing'] || 0 },
-    { key: 'Filling Completed', label: 'Done', count: statusCounts['Filling Completed'] || 0 },
-  ];
 
   return (
-    <div className="min-h-full page-enter" style={{ background: 'oklch(0.14 0.04 240)' }}>
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="px-4 pt-6 pb-4 sticky top-0 z-10"
-        style={{ background: 'oklch(0.14 0.04 240)', borderBottom: '1px solid oklch(0.22 0.06 240)' }}>
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 pt-6 pb-8">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: 'oklch(0.97 0.005 240)' }}>Admin Dashboard</h1>
-            <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>
-              {sortedOrders.length} total orders
-            </p>
+            <h1 className="text-xl font-bold">Admin Dashboard</h1>
+            <p className="text-orange-100 text-sm">Vijay Computer Center</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={onNavigateQR}
-              className="p-2 rounded-xl transition-all active:scale-95"
-              style={{ background: 'oklch(0.22 0.06 240)' }}>
-              <CreditCard size={18} style={{ color: 'oklch(0.78 0.12 85)' }} />
+          {onNavigateQR && (
+            <button
+              onClick={onNavigateQR}
+              className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+            >
+              QR Settings
             </button>
-            <button onClick={() => refetch()}
-              className="p-2 rounded-xl transition-all active:scale-95"
-              style={{ background: 'oklch(0.22 0.06 240)' }}>
-              <RefreshCw size={18} className={isFetching ? 'animate-spin' : ''}
-                style={{ color: 'oklch(0.82 0.012 240)' }} />
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {filterOptions.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setFilter(opt.key)}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-              style={{
-                background: filter === opt.key ? 'oklch(0.78 0.12 85)' : 'oklch(0.22 0.06 240)',
-                color: filter === opt.key ? 'oklch(0.14 0.04 240)' : 'oklch(0.72 0.015 240)',
-              }}>
-              {opt.label} {opt.count > 0 && `(${opt.count})`}
-            </button>
-          ))}
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-white/20 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-xs text-orange-100">Total</div>
+          </div>
+          <div className="bg-white/20 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold">{stats.pending}</div>
+            <div className="text-xs text-orange-100">Pending</div>
+          </div>
+          <div className="bg-white/20 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold">{stats.accepted}</div>
+            <div className="text-xs text-orange-100">Active</div>
+          </div>
+          <div className="bg-white/20 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold">{stats.completed}</div>
+            <div className="text-xs text-orange-100">Done</div>
+          </div>
         </div>
       </div>
 
-      <div className="px-4 py-4 pb-24">
-        {isLoading && (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'oklch(0.78 0.12 85)', borderTopColor: 'transparent' }} />
+      <div className="px-4 -mt-2">
+        {/* Tabs */}
+        <div className="flex gap-1 bg-white rounded-xl shadow-sm p-1 mb-4 overflow-x-auto">
+          {(['all', 'pending', 'accepted', 'rejected', 'completed'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 min-w-[60px] text-xs font-semibold py-2 px-2 rounded-lg capitalize transition-colors ${
+                activeTab === tab
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Orders List */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+            <p className="text-gray-500 text-sm">Loading orders...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+            <p className="text-orange-700 text-sm font-medium mb-2">Could not load orders</p>
+            <p className="text-orange-600 text-xs mb-3">Please check your connection and try again.</p>
+            <button
+              onClick={() => refetch()}
+              className="bg-orange-500 text-white text-xs font-semibold py-2 px-4 rounded-lg"
+            >
+              Retry
+            </button>
+          </div>
+        ) : sortedOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="text-4xl mb-3">📋</div>
+            <p className="text-gray-500 text-sm">No orders in this category</p>
+          </div>
+        ) : (
+          <div>
+            {sortedOrders.map(order => (
+              <OrderCard key={order.orderId.toString()} order={order} />
+            ))}
           </div>
         )}
-
-        {!isLoading && filteredOrders.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-3">📋</p>
-            <p className="font-medium" style={{ color: 'oklch(0.62 0.015 240)' }}>No orders found</p>
-          </div>
-        )}
-
-        {filteredOrders.map(order => (
-          <OrderCard
-            key={order.orderId.toString()}
-            order={order}
-            onAccept={handleAccept}
-            onReject={handleReject}
-            onConfirmPayment={handleConfirmPayment}
-            isUpdating={updateStatus.isPending || confirmPayment.isPending}
-          />
-        ))}
       </div>
     </div>
   );

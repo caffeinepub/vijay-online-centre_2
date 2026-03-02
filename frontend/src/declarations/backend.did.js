@@ -27,11 +27,11 @@ export const UserRole = IDL.Variant({
 export const ServiceOrder = IDL.Record({
   'status' : IDL.Text,
   'serviceName' : IDL.Text,
-  'documentKey' : IDL.Text,
   'name' : IDL.Text,
+  'documentDataBase64' : IDL.Text,
+  'photoDataBase64' : IDL.Text,
   'orderId' : IDL.Nat,
   'address' : IDL.Text,
-  'timestamp' : IDL.Int,
   'customerId' : IDL.Text,
   'mobile' : IDL.Text,
   'amount' : IDL.Nat,
@@ -39,11 +39,6 @@ export const ServiceOrder = IDL.Record({
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'mobile' : IDL.Text,
-});
-export const PaymentConfirmation = IDL.Record({
-  'orderId' : IDL.Nat,
-  'timestamp' : IDL.Int,
-  'confirmedByAdmin' : IDL.Bool,
 });
 export const AdminQRSettings = IDL.Record({
   'autoQrAmount' : IDL.Nat,
@@ -79,22 +74,17 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'confirmPayment' : IDL.Func([IDL.Nat], [], []),
   'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
   'getOrdersByCustomer' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(ServiceOrder)],
       ['query'],
     ),
-  'getPaymentConfirmation' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Opt(PaymentConfirmation)],
-      ['query'],
-    ),
   'getPermQR' : IDL.Func([], [IDL.Text], ['query']),
-  'getQRSettings' : IDL.Func([], [AdminQRSettings], ['query']),
+  'getQRSettings' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -106,7 +96,16 @@ export const idlService = IDL.Service({
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setPermQR' : IDL.Func([IDL.Text, IDL.Nat], [], []),
   'submitOrder' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Nat,
+      ],
       [IDL.Nat],
       [],
     ),
@@ -135,21 +134,16 @@ export const idlFactory = ({ IDL }) => {
   const ServiceOrder = IDL.Record({
     'status' : IDL.Text,
     'serviceName' : IDL.Text,
-    'documentKey' : IDL.Text,
     'name' : IDL.Text,
+    'documentDataBase64' : IDL.Text,
+    'photoDataBase64' : IDL.Text,
     'orderId' : IDL.Nat,
     'address' : IDL.Text,
-    'timestamp' : IDL.Int,
     'customerId' : IDL.Text,
     'mobile' : IDL.Text,
     'amount' : IDL.Nat,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'mobile' : IDL.Text });
-  const PaymentConfirmation = IDL.Record({
-    'orderId' : IDL.Nat,
-    'timestamp' : IDL.Int,
-    'confirmedByAdmin' : IDL.Bool,
-  });
   const AdminQRSettings = IDL.Record({
     'autoQrAmount' : IDL.Nat,
     'permanentQrKey' : IDL.Text,
@@ -184,22 +178,17 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'confirmPayment' : IDL.Func([IDL.Nat], [], []),
     'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
     'getOrdersByCustomer' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(ServiceOrder)],
         ['query'],
       ),
-    'getPaymentConfirmation' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Opt(PaymentConfirmation)],
-        ['query'],
-      ),
     'getPermQR' : IDL.Func([], [IDL.Text], ['query']),
-    'getQRSettings' : IDL.Func([], [AdminQRSettings], ['query']),
+    'getQRSettings' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -211,7 +200,16 @@ export const idlFactory = ({ IDL }) => {
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setPermQR' : IDL.Func([IDL.Text, IDL.Nat], [], []),
     'submitOrder' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Nat],
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Nat,
+        ],
         [IDL.Nat],
         [],
       ),

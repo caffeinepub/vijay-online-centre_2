@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix three critical issues in the Vijay Online Centre app: persistent login sessions, a broken logout button, and an "Unauthorized" error on form submissions.
+**Goal:** Fix four critical issues in the Vijay Online Centre admin panel: authorization barriers, form submission failures, photo storage/retrieval errors, and non-functional Accept/Reject buttons.
 
 **Planned changes:**
-- Update AuthContext to save customer session (user ID, name, mobile, role) to localStorage on login and restore it automatically on app load, so the user stays logged in across refreshes and reopens.
-- Fix the Logout button in the Layout component to clear the session from both AuthContext state and localStorage, then navigate the user back to the login/selection screen.
-- Fix the "Unauthorized: Only authenticated users can submit orders" error by ensuring the authenticated customer's ID from AuthContext is correctly passed in all backend calls (submitOrder and similar mutations in useQueries.ts).
-- Update the backend submitOrder (or equivalent) function in backend/main.mo to accept the customer ID supplied from the frontend OTP-based session instead of relying solely on Internet Identity principal.
-- If session is missing or expired at submission time, redirect the user to login with a clear message instead of showing a raw unauthorized error.
+- Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel; persist admin session (vijay@123) reliably in localStorage so it never expires or requires re-authentication after login.
+- Fix the ServiceForm component so form submission never shows a "Failed" error; optimize the backend `submitOrder` function to return responses promptly without hanging or timing out.
+- Fix photo/document display in the Admin Dashboard so clicking the "Photo" button renders the base64-stored image immediately as a data URL, eliminating ERR_FILE_NOT_FOUND errors.
+- Wire the "Accept" and "Reject" buttons in the Admin Dashboard to the backend `updateOrderStatus` function; reflect the updated order status immediately on the card with inline success or error messages.
 
-**User-visible outcome:** Once logged in, customers remain logged in across page refreshes and app reopens. The logout button works correctly and returns users to the login screen. Customers can successfully submit service forms like "Niwas Praman Patra" without encountering any unauthorized errors.
+**User-visible outcome:** The admin can log in once and manage all orders without interruption — submitting forms succeeds, attached photos display correctly, and Accept/Reject actions update order statuses instantly.

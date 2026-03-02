@@ -89,18 +89,14 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface _CaffeineStorageRefillResult {
-    success?: boolean;
-    topped_up_amount?: bigint;
-}
 export interface ServiceOrder {
     status: string;
     serviceName: string;
-    documentKey: string;
     name: string;
+    documentDataBase64: string;
+    photoDataBase64: string;
     orderId: bigint;
     address: string;
-    timestamp: bigint;
     customerId: string;
     mobile: string;
     amount: bigint;
@@ -120,10 +116,9 @@ export interface UserProfile {
     name: string;
     mobile: string;
 }
-export interface PaymentConfirmation {
-    orderId: bigint;
-    timestamp: bigint;
-    confirmedByAdmin: boolean;
+export interface _CaffeineStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
 }
 export enum UserRole {
     admin = "admin",
@@ -139,64 +134,23 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    /**
-     * / Admin-only: confirm that a payment has been received for an order,
-     * / and advance the order status to 'Payment Completed'.
-     */
-    confirmPayment(orderId: bigint): Promise<void>;
-    /**
-     * / Admin-only: retrieve all submitted orders.
-     */
     getAllOrders(): Promise<Array<ServiceOrder>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    /**
-     * / Any caller may query orders for a given customerId.
-     * / The customerId acts as the app-level authorization token.
-     * / Admins (IC-level) may also query any customer's orders.
-     */
+    getOrderById(orderId: bigint): Promise<ServiceOrder | null>;
     getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
-    /**
-     * / Any caller may check the payment confirmation for an order.
-     * / The customerId in the order acts as the app-level authorization token.
-     */
-    getPaymentConfirmation(orderId: bigint): Promise<PaymentConfirmation | null>;
-    /**
-     * / Anyone may retrieve the permanent QR image (needed to display payment QR to customers).
-     */
     getPermQR(): Promise<string>;
-    /**
-     * / Anyone may retrieve the full QR settings (amount needed for auto-QR generation).
-     */
-    getQRSettings(): Promise<AdminQRSettings>;
+    getQRSettings(): Promise<AdminQRSettings | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
-    /**
-     * / Anyone (including guests) may attempt to log in.
-     */
     loginCustomer(mobile: string, password: string): Promise<boolean>;
-    /**
-     * / Anyone (including guests) may register a new customer account.
-     */
     registerCustomer(name: string, mobile: string, password: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    /**
-     * / Admin-only: set the permanent QR image and/or auto-QR amount.
-     */
     setPermQR(base64: string, autoAmount: bigint): Promise<void>;
-    /**
-     * / The application uses a mobile/password authentication system independent of
-     * / Internet Identity. Customers are identified by their customerId (mobile number).
-     * / No IC-level role check is applied here; the customerId passed by the frontend
-     * / represents the logged-in customer's identity within the app's own auth system.
-     */
-    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, documentKey: string, amount: bigint): Promise<bigint>;
-    /**
-     * / Admin-only: update the status of a service order.
-     */
+    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, amount: bigint): Promise<bigint>;
     updateOrderStatus(orderId: bigint, status: string): Promise<void>;
 }
-import type { PaymentConfirmation as _PaymentConfirmation, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { AdminQRSettings as _AdminQRSettings, ServiceOrder as _ServiceOrder, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -311,20 +265,6 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async confirmPayment(arg0: bigint): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.confirmPayment(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.confirmPayment(arg0);
-            return result;
-        }
-    }
     async getAllOrders(): Promise<Array<ServiceOrder>> {
         if (this.processError) {
             try {
@@ -367,6 +307,20 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getOrderById(arg0: bigint): Promise<ServiceOrder | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getOrderById(arg0);
+                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getOrderById(arg0);
+            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getOrdersByCustomer(arg0: string): Promise<Array<ServiceOrder>> {
         if (this.processError) {
             try {
@@ -379,20 +333,6 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getOrdersByCustomer(arg0);
             return result;
-        }
-    }
-    async getPaymentConfirmation(arg0: bigint): Promise<PaymentConfirmation | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getPaymentConfirmation(arg0);
-                return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getPaymentConfirmation(arg0);
-            return from_candid_opt_n13(this._uploadFile, this._downloadFile, result);
         }
     }
     async getPermQR(): Promise<string> {
@@ -409,18 +349,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getQRSettings(): Promise<AdminQRSettings> {
+    async getQRSettings(): Promise<AdminQRSettings | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getQRSettings();
-                return result;
+                return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getQRSettings();
-            return result;
+            return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
@@ -507,17 +447,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitOrder(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: bigint): Promise<bigint> {
+    async submitOrder(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: string, arg7: bigint): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+            const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
             return result;
         }
     }
@@ -545,7 +485,10 @@ function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: Externa
 function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_PaymentConfirmation]): PaymentConfirmation | null {
+function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ServiceOrder]): ServiceOrder | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_AdminQRSettings]): AdminQRSettings | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {

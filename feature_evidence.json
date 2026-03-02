@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-persistent-customer-session-in-authcontext-so-that-once-a-customer-logs-in-their-session-is-restored-automatically-on-every-page-load-using-localstorage-and-they-are-not-redirected-to-the-login-screen-unless-they-explicitly-log-out",
-      "featureTitle": "Implement persistent customer session in AuthContext so that once a customer logs in, their session is restored automatically on every page load (using localStorage) and they are NOT redirected to the login screen unless they explicitly log out.",
+      "featureId": "feature-remove-all-authorization-error-messages-and-re-login-prompts-from-the-admin-dashboard-and-admin-qr-management-panel-the-admin-user-vijay-123-must-have-permanent-master-access-that-never-expires-or-requires-re-authentication-once-logged-in-ensure-that-authcontext-persists-the-admin-session-reliably-in-localstorage-so-that-page-reloads-or-navigation-between-admin-tabs-never-triggers-an-authorization-error-or-redirects-back-to-login",
+      "featureTitle": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
       "files": [
         "frontend/src/App.tsx",
+        "frontend/src/components/AdminDashboard.tsx",
+        "frontend/src/components/AdminQRManagement.tsx",
         "frontend/src/contexts/AuthContext.tsx"
       ],
       "components": [
@@ -15,7 +17,9 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
       ],
       "testIds": [
         "REQ-1"
@@ -23,12 +27,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-logout-button-in-the-layout-component-so-that-clicking-it-clears-the-customer-or-admin-session-from-both-authcontext-state-and-localstorage-then-navigates-the-user-back-to-the-login-selection-screen",
-      "featureTitle": "Fix the Logout button in the Layout component so that clicking it clears the customer or admin session from both AuthContext state and localStorage, then navigates the user back to the login/selection screen.",
+      "featureId": "feature-fix-form-submission-so-it-never-returns-a-failed-error-in-the-serviceform-component-ensure-the-mutation-correctly-handles-backend-responses-retries-on-transient-failures-and-displays-a-clear-success-state-in-the-backend-optimize-the-submitorder-function-to-process-requests-efficiently-avoid-unnecessary-computations-or-unbounded-loops-that-could-cause-hangs-ensure-the-actor-returns-responses-promptly-so-the-frontend-never-times-out-waiting",
+      "featureTitle": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/contexts/AuthContext.tsx"
+        "frontend/src/components/ServiceForm.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -37,7 +40,9 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
       ],
       "testIds": [
         "REQ-2"
@@ -45,11 +50,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-unauthorized-only-authenticated-users-can-submit-orders-error-in-serviceform-and-any-other-form-submission-flows-ensure-that-after-a-customer-logs-in-the-authenticated-user-s-principal-or-customer-id-is-correctly-attached-to-every-backend-call-submitorder-and-any-similar-mutations-in-usequeries-ts-so-forms-like-niwas-praman-patra-submit-successfully-without-an-unauthorized-error",
-      "featureTitle": "Fix the 'Unauthorized: Only authenticated users can submit orders' error in ServiceForm and any other form submission flows. Ensure that after a customer logs in, the authenticated user's principal or customer ID is correctly attached to every backend call (submitOrder and any similar mutations in useQueries.ts), so forms like 'Niwas Praman Patra' submit successfully without an unauthorized error.",
+      "featureId": "feature-fix-the-photo-storage-and-retrieval-so-that-clicking-the-photo-button-in-the-admin-dashboard-immediately-displays-the-attached-image-without-any-err-file-not-found-error-photos-submitted-with-orders-are-stored-as-base64-strings-in-the-backend-the-admin-dashboard-must-reconstruct-a-valid-object-url-or-data-url-from-the-stored-base64-data-and-render-it-inline-or-in-a-new-tab-remove-any-file-path-based-resolution-that-causes-the-not-found-error",
+      "featureTitle": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
       "files": [
-        "frontend/src/components/ServiceForm.tsx",
-        "frontend/src/contexts/AuthContext.tsx"
+        "frontend/src/components/AdminDashboard.tsx",
+        "frontend/src/components/OrderTracking.tsx",
+        "frontend/src/components/Receipt.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -58,10 +64,35 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-activate-the-accept-and-reject-buttons-in-the-admin-dashboard-so-that-clicking-them-updates-the-order-status-in-the-backend-and-reflects-the-new-status-in-the-ui-immediately-wire-the-buttons-to-the-existing-updateorderstatus-backend-function-on-success-the-order-card-should-update-to-show-the-new-status-accepted-or-rejected-and-display-a-brief-inline-success-message-on-failure-show-a-clear-error-message-on-the-card",
+      "featureTitle": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
+      "files": [
+        "frontend/src/components/AdminDashboard.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "qr-code@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

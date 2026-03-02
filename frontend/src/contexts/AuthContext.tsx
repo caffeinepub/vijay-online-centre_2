@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface CustomerSession {
   mobile: string;
@@ -7,28 +7,30 @@ export interface CustomerSession {
 
 interface AuthContextType {
   // Admin
-  isAdmin: boolean;
-  adminLogin: (userId: string, password: string) => boolean;
+  isAdminLoggedIn: boolean;
+  isAdmin: boolean; // alias for isAdminLoggedIn
+  adminLogin: (username: string, password: string) => boolean;
   adminLogout: () => void;
 
   // Customer
   customerSession: CustomerSession | null;
-  setCustomerSession: (session: CustomerSession | null) => void;
+  setCustomerSession: (session: CustomerSession | null) => void; // backward compat alias
+  customerLogin: (mobile: string, name: string) => void;
   customerLogout: () => void;
 
   // General
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-const ADMIN_USER_ID = 'vijay@123user';
-const ADMIN_PASSWORD = 'vijay@2026';
-const ADMIN_SESSION_KEY = 'vijay_admin_session';
-const CUSTOMER_SESSION_KEY = 'vijay_customer_session';
+const ADMIN_USERNAME = 'vijay@123';
+const ADMIN_PASSWORD = 'vijay@123';
+const ADMIN_SESSION_KEY = 'vcc_admin_session';
+const CUSTOMER_SESSION_KEY = 'vcc_customer_session';
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     try {
       return localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
     } catch {
@@ -41,36 +43,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(CUSTOMER_SESSION_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validate that the stored session has required fields
-        if (parsed && typeof parsed.mobile === 'string' && parsed.mobile.length > 0) {
-          return parsed;
-        }
+        if (parsed && parsed.mobile && parsed.name) return parsed;
       }
-      return null;
     } catch {
-      return null;
+      // ignore
     }
+    return null;
   });
 
-  const adminLogin = (userId: string, password: string): boolean => {
-    if (userId === ADMIN_USER_ID && password === ADMIN_PASSWORD) {
-      setIsAdmin(true);
+  // Persist admin session whenever it changes
+  useEffect(() => {
+    try {
+      if (isAdminLoggedIn) {
+        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+      } else {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [isAdminLoggedIn]);
+
+  // Persist customer session whenever it changes
+  useEffect(() => {
+    try {
+      if (customerSession) {
+        localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customerSession));
+      } else {
+        localStorage.removeItem(CUSTOMER_SESSION_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [customerSession]);
+
+  const adminLogin = useCallback((username: string, password: string): boolean => {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      setIsAdminLoggedIn(true);
       try {
         localStorage.setItem(ADMIN_SESSION_KEY, 'true');
-      } catch { /* ignore */ }
+      } catch {
+        // ignore
+      }
       return true;
     }
     return false;
-  };
+  }, []);
 
-  const adminLogout = () => {
-    setIsAdmin(false);
+  const adminLogout = useCallback(() => {
+    setIsAdminLoggedIn(false);
     try {
       localStorage.removeItem(ADMIN_SESSION_KEY);
-    } catch { /* ignore */ }
-  };
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  const setCustomerSession = (session: CustomerSession | null) => {
+  const customerLogin = useCallback((mobile: string, name: string) => {
+    const session: CustomerSession = { mobile, name };
+    setCustomerSessionState(session);
+    try {
+      localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(session));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Backward-compatible setter that accepts a full session object or null
+  const setCustomerSession = useCallback((session: CustomerSession | null) => {
     setCustomerSessionState(session);
     try {
       if (session) {
@@ -78,25 +118,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         localStorage.removeItem(CUSTOMER_SESSION_KEY);
       }
-    } catch { /* ignore */ }
-  };
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  const customerLogout = () => {
+  const customerLogout = useCallback(() => {
     setCustomerSessionState(null);
     try {
       localStorage.removeItem(CUSTOMER_SESSION_KEY);
-    } catch { /* ignore */ }
-  };
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  const isAuthenticated = isAdmin || customerSession !== null;
+  const isAuthenticated = isAdminLoggedIn || customerSession !== null;
 
   return (
     <AuthContext.Provider value={{
-      isAdmin,
+      isAdminLoggedIn,
+      isAdmin: isAdminLoggedIn, // alias
       adminLogin,
       adminLogout,
       customerSession,
       setCustomerSession,
+      customerLogin,
       customerLogout,
       isAuthenticated,
     }}>

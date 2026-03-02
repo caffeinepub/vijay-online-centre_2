@@ -42,19 +42,12 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: React.Rea
   },
 };
 
-function formatDate(timestamp: bigint): string {
-  const ms = Number(timestamp) / 1_000_000;
-  return new Date(ms).toLocaleDateString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
-}
-
 export default function MyOrders({ onViewOrder, onViewReceipt }: MyOrdersProps) {
   const { customerSession } = useAuth();
   const { data: orders, isLoading, error } = useGetOrdersByCustomer(customerSession?.mobile || '');
 
-  const sortedOrders = [...(orders || [])].sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
+  // Sort by orderId descending (newest first) since timestamp is not available
+  const sortedOrders = [...(orders || [])].sort((a, b) => Number(b.orderId) - Number(a.orderId));
 
   return (
     <div className="min-h-full page-enter" style={{ background: 'oklch(0.14 0.04 240)' }}>
@@ -109,7 +102,7 @@ export default function MyOrders({ onViewOrder, onViewReceipt }: MyOrdersProps) 
                         {order.serviceName}
                       </p>
                       <p className="text-xs mt-0.5" style={{ color: 'oklch(0.62 0.015 240)' }}>
-                        Order #{order.orderId.toString()} · {formatDate(order.timestamp)}
+                        Order #{order.orderId.toString()}
                       </p>
                     </div>
                     <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"

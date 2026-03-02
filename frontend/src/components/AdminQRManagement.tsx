@@ -1,240 +1,261 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, QrCode, CheckCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useGetQRSettings, useSetPermQR } from '../hooks/useQueries';
 
 interface AdminQRManagementProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export default function AdminQRManagement({ onBack }: AdminQRManagementProps) {
-  const { data: qrSettings } = useGetQRSettings();
+  const { isAdminLoggedIn } = useAuth();
+  const { data: qrSettings, isLoading } = useGetQRSettings();
   const setPermQR = useSetPermQR();
 
   const [activeTab, setActiveTab] = useState<'permanent' | 'auto'>('permanent');
   const [autoAmount, setAutoAmount] = useState('');
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleQRImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!isAdminLoggedIn) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+        <div className="text-4xl mb-4">🔒</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Admin Access Required</h2>
+        <p className="text-gray-500 text-sm text-center">Please login as admin to manage QR settings.</p>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="mt-4 bg-orange-500 text-white font-semibold py-2 px-6 rounded-xl"
+          >
+            Go Back
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setError('');
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const dataUrl = ev.target?.result as string;
-        await setPermQR.mutateAsync({ base64: dataUrl, autoAmount: BigInt(0) });
-        setSuccess('QR image uploaded successfully!');
-        setTimeout(() => setSuccess(''), 3000);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
-    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setQrPreview(result);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleUseDefaultQR = async () => {
-    setError('');
-    try {
-      // Use the uploaded ICICI Bank QR image as default
-      await setPermQR.mutateAsync({
-        base64: '/assets/generated/vijay-logo.dim_512x512.png',
-        autoAmount: BigInt(0)
-      });
-      setSuccess('Default QR set successfully!');
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to set default QR');
-    }
-  };
-
-  const handleSetAutoAmount = async () => {
-    if (!autoAmount || isNaN(Number(autoAmount)) || Number(autoAmount) <= 0) {
-      setError('Please enter a valid amount');
+  const handleUploadQR = async () => {
+    if (!qrPreview) {
+      setUploadMessage({ type: 'error', text: 'Please select a QR image first.' });
       return;
     }
-    setError('');
+    setUploadMessage(null);
     try {
-      await setPermQR.mutateAsync({
-        base64: qrSettings?.permanentQrKey || '',
-        autoAmount: BigInt(Math.round(Number(autoAmount)))
-      });
-      setSuccess(`Auto QR amount set to ₹${autoAmount}`);
-      setTimeout(() => setSuccess(''), 3000);
+      const amount = autoAmount ? BigInt(parseInt(autoAmount, 10)) : BigInt(qrSettings?.autoQrAmount || 0);
+      await setPermQR.mutateAsync({ base64: qrPreview, autoAmount: amount });
+      setUploadMessage({ type: 'success', text: 'QR settings saved successfully!' });
+      setQrPreview(null);
+      setTimeout(() => setUploadMessage(null), 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to set amount');
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('admin')) {
+        setUploadMessage({ type: 'error', text: 'Could not save QR. Please refresh the page and try again.' });
+      } else {
+        setUploadMessage({ type: 'error', text: 'Failed to save QR settings. Please try again.' });
+      }
+      setTimeout(() => setUploadMessage(null), 4000);
     }
   };
 
+  const currentQR = qrSettings?.permanentQrKey || '';
+  const currentAmount = qrSettings?.autoQrAmount ? Number(qrSettings.autoQrAmount) : 0;
+
   return (
-    <div className="min-h-full page-enter" style={{ background: 'oklch(0.14 0.04 240)' }}>
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="flex items-center px-4 pt-6 pb-4 sticky top-0 z-10"
-        style={{ background: 'oklch(0.14 0.04 240)', borderBottom: '1px solid oklch(0.22 0.06 240)' }}>
-        <button onClick={onBack} className="p-2 rounded-xl mr-3 transition-all active:scale-95"
-          style={{ background: 'oklch(0.22 0.06 240)' }}>
-          <ArrowLeft size={20} style={{ color: 'oklch(0.82 0.012 240)' }} />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold" style={{ color: 'oklch(0.97 0.005 240)' }}>QR Management</h1>
-          <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>Payment QR settings</p>
-        </div>
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 pt-6 pb-8">
+        {onBack && (
+          <button onClick={onBack} className="text-white/80 hover:text-white text-sm mb-3 flex items-center gap-1">
+            ← Back
+          </button>
+        )}
+        <h1 className="text-xl font-bold">QR Management</h1>
+        <p className="text-orange-100 text-sm">Manage payment QR codes</p>
       </div>
 
-      <div className="px-4 py-4 pb-24">
+      <div className="px-4 -mt-2">
         {/* Tabs */}
-        <div className="flex rounded-xl p-1 mb-6"
-          style={{ background: 'oklch(0.22 0.06 240)' }}>
+        <div className="flex gap-1 bg-white rounded-xl shadow-sm p-1 mb-4">
           <button
             onClick={() => setActiveTab('permanent')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{
-              background: activeTab === 'permanent' ? 'oklch(0.35 0.08 240)' : 'transparent',
-              color: activeTab === 'permanent' ? 'oklch(0.97 0.005 240)' : 'oklch(0.62 0.015 240)',
-            }}>
+            className={`flex-1 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${
+              activeTab === 'permanent' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
             Permanent QR
           </button>
           <button
             onClick={() => setActiveTab('auto')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{
-              background: activeTab === 'auto' ? 'oklch(0.35 0.08 240)' : 'transparent',
-              color: activeTab === 'auto' ? 'oklch(0.97 0.005 240)' : 'oklch(0.62 0.015 240)',
-            }}>
-            Auto QR
+            className={`flex-1 text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${
+              activeTab === 'auto' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Auto QR Amount
           </button>
         </div>
 
-        {/* Success/Error */}
-        {success && (
-          <div className="px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2"
-            style={{ background: 'oklch(0.5 0.15 145 / 20%)', border: '1px solid oklch(0.5 0.15 145 / 40%)', color: 'oklch(0.7 0.15 145)' }}>
-            <CheckCircle size={16} /> {success}
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
-        )}
-        {error && (
-          <div className="px-4 py-3 rounded-xl text-sm mb-4"
-            style={{ background: 'oklch(0.577 0.245 27.325 / 20%)', border: '1px solid oklch(0.577 0.245 27.325 / 40%)', color: 'oklch(0.85 0.15 27)' }}>
-            {error}
-          </div>
-        )}
+        ) : (
+          <>
+            {activeTab === 'permanent' && (
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <h2 className="font-bold text-gray-800 mb-3">Upload Permanent QR Code</h2>
 
-        {activeTab === 'permanent' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl p-4"
-              style={{ background: 'oklch(0.18 0.05 240)', border: '1px solid oklch(0.28 0.07 240)' }}>
-              <p className="text-sm font-semibold mb-2" style={{ color: 'oklch(0.97 0.005 240)' }}>
-                Current QR Status
-              </p>
-              {qrSettings?.permanentQrKey ? (
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={16} style={{ color: 'oklch(0.6 0.15 145)' }} />
-                  <p className="text-xs" style={{ color: 'oklch(0.72 0.015 240)' }}>
-                    Permanent QR is set and active
-                  </p>
+                {/* Current QR */}
+                {currentQR && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-2 font-medium">Current QR Code:</p>
+                    <div className="flex justify-center">
+                      <img
+                        src={currentQR.startsWith('data:') ? currentQR : `data:image/jpeg;base64,${currentQR}`}
+                        alt="Current QR"
+                        className="w-40 h-40 object-contain border border-gray-200 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload new QR */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors mb-3"
+                >
+                  {qrPreview ? (
+                    <img src={qrPreview} alt="Preview" className="w-32 h-32 object-contain mx-auto rounded-lg" />
+                  ) : (
+                    <>
+                      <div className="text-3xl mb-2">📷</div>
+                      <p className="text-sm text-gray-600 font-medium">Tap to select QR image</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG supported</p>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>
-                  No permanent QR set yet
-                </p>
-              )}
-            </div>
-
-            {/* Current QR Preview */}
-            {qrSettings?.permanentQrKey && (
-              <div className="rounded-2xl p-4 flex flex-col items-center"
-                style={{ background: 'oklch(0.97 0.005 240)' }}>
-                <img
-                  src={qrSettings.permanentQrKey}
-                  alt="Current QR"
-                  className="w-40 h-40 object-contain"
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
-                <p className="text-xs mt-2" style={{ color: 'oklch(0.35 0.08 240)' }}>Current QR Code</p>
-              </div>
-            )}
 
-            {/* Upload New QR */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleQRImageUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={setPermQR.isPending}
-              className="w-full py-4 rounded-xl border-2 border-dashed flex flex-col items-center gap-2 transition-all active:scale-95 disabled:opacity-60"
-              style={{ borderColor: 'oklch(0.35 0.08 240)', background: 'oklch(0.18 0.05 240)' }}>
-              <Upload size={24} style={{ color: 'oklch(0.78 0.12 85)' }} />
-              <p className="text-sm font-medium" style={{ color: 'oklch(0.97 0.005 240)' }}>
-                Upload New QR Image
-              </p>
-              <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>
-                Upload your UPI QR code image
-              </p>
-            </button>
-
-            <button
-              onClick={handleUseDefaultQR}
-              disabled={setPermQR.isPending}
-              className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-60"
-              style={{ background: 'oklch(0.22 0.06 240)', color: 'oklch(0.82 0.012 240)', border: '1px solid oklch(0.35 0.08 240)' }}>
-              Use ICICI Bank QR (Default)
-            </button>
-          </div>
-        )}
-
-        {activeTab === 'auto' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl p-4"
-              style={{ background: 'oklch(0.18 0.05 240)', border: '1px solid oklch(0.28 0.07 240)' }}>
-              <p className="text-sm font-semibold mb-1" style={{ color: 'oklch(0.97 0.005 240)' }}>
-                Auto QR Generation
-              </p>
-              <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>
-                Set a fixed amount for auto-generated UPI QR codes shown to customers
-              </p>
-            </div>
-
-            {qrSettings && Number(qrSettings.autoQrAmount) > 0 && (
-              <div className="rounded-2xl p-4 flex items-center gap-3"
-                style={{ background: 'oklch(0.78 0.12 85 / 10%)', border: '1px solid oklch(0.78 0.12 85 / 30%)' }}>
-                <QrCode size={20} style={{ color: 'oklch(0.78 0.12 85)' }} />
-                <div>
-                  <p className="text-xs" style={{ color: 'oklch(0.72 0.015 240)' }}>Current Auto Amount</p>
-                  <p className="text-lg font-bold" style={{ color: 'oklch(0.78 0.12 85)' }}>
-                    ₹{qrSettings.autoQrAmount.toString()}
-                  </p>
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Default Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={autoAmount}
+                    onChange={e => setAutoAmount(e.target.value)}
+                    placeholder={currentAmount > 0 ? `Current: ₹${currentAmount}` : 'Enter amount (optional)'}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
                 </div>
+
+                {uploadMessage && (
+                  <div className={`text-xs px-3 py-2 rounded-lg mb-3 font-medium ${
+                    uploadMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  }`}>
+                    {uploadMessage.text}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleUploadQR}
+                  disabled={setPermQR.isPending || !qrPreview}
+                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
+                >
+                  {setPermQR.isPending ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Saving...
+                    </span>
+                  ) : 'Save QR Settings'}
+                </button>
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'oklch(0.82 0.012 240)' }}>
-                Set Amount (₹)
-              </label>
-              <input
-                type="number"
-                value={autoAmount}
-                onChange={e => setAutoAmount(e.target.value)}
-                placeholder="Enter amount in rupees"
-                min="1"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{ background: 'oklch(0.22 0.06 240)', border: '1px solid oklch(0.35 0.08 240)', color: 'oklch(0.97 0.005 240)' }}
-              />
-            </div>
+            {activeTab === 'auto' && (
+              <div className="bg-white rounded-xl shadow-sm p-4">
+                <h2 className="font-bold text-gray-800 mb-3">Auto QR Amount</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Set the default payment amount for auto-generated QR codes.
+                </p>
 
-            <button
-              onClick={handleSetAutoAmount}
-              disabled={setPermQR.isPending}
-              className="w-full py-4 rounded-xl font-semibold text-base transition-all active:scale-95 disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg, oklch(0.72 0.14 85), oklch(0.82 0.12 85))', color: 'oklch(0.14 0.04 240)' }}>
-              {setPermQR.isPending ? 'Saving...' : 'Set Auto QR Amount'}
-            </button>
-          </div>
+                {currentAmount > 0 && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
+                    <p className="text-xs text-orange-600 font-medium">Current Amount</p>
+                    <p className="text-2xl font-bold text-orange-700">₹{currentAmount}</p>
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">New Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={autoAmount}
+                    onChange={e => setAutoAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
+                </div>
+
+                {uploadMessage && (
+                  <div className={`text-xs px-3 py-2 rounded-lg mb-3 font-medium ${
+                    uploadMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  }`}>
+                    {uploadMessage.text}
+                  </div>
+                )}
+
+                <button
+                  onClick={async () => {
+                    if (!autoAmount) {
+                      setUploadMessage({ type: 'error', text: 'Please enter an amount.' });
+                      return;
+                    }
+                    setUploadMessage(null);
+                    try {
+                      const amount = BigInt(parseInt(autoAmount, 10));
+                      await setPermQR.mutateAsync({ base64: currentQR, autoAmount: amount });
+                      setUploadMessage({ type: 'success', text: 'Amount updated successfully!' });
+                      setAutoAmount('');
+                      setTimeout(() => setUploadMessage(null), 3000);
+                    } catch (err: unknown) {
+                      const msg = err instanceof Error ? err.message : String(err);
+                      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('admin')) {
+                        setUploadMessage({ type: 'error', text: 'Could not update amount. Please refresh and try again.' });
+                      } else {
+                        setUploadMessage({ type: 'error', text: 'Failed to update amount. Please try again.' });
+                      }
+                      setTimeout(() => setUploadMessage(null), 4000);
+                    }
+                  }}
+                  disabled={setPermQR.isPending || !autoAmount}
+                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
+                >
+                  {setPermQR.isPending ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Updating...
+                    </span>
+                  ) : 'Update Amount'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

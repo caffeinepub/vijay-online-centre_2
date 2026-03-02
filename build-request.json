@@ -1,77 +1,99 @@
 {
   "kind": "build_request",
-  "title": "Fix Persistent Login, Logout Button, and Unauthorized Submission Error",
+  "title": "Fix Authorization Barriers, Form Submission, Photo Storage & Admin Buttons",
   "projectName": "Vijay Online Centre",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement persistent customer session in AuthContext so that once a customer logs in, their session is restored automatically on every page load (using localStorage) and they are NOT redirected to the login screen unless they explicitly log out.",
+      "text": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-4"
         ],
         "quotes": [
-          "Persistent Login (Stay Logged In): App mein 'Session Persistence' add karo. Customer agar ek baar login karle, toh jab tak wo khud logout na kare, wo logged-in hi rehna chahiye."
+          "Remove All Authorization Barriers: Admin panel aur QR Management se 'Authorization error' ya 'Re-login' ka message hamesha ke liye hatao. Admin (vijay@123) ko permanent master access do."
         ]
       },
       "acceptanceCriteria": [
-        "After a customer logs in, refreshing or reopening the app does not show the login screen.",
-        "The customer session (user ID, name, mobile, role) is saved to localStorage on successful login.",
-        "On app load, AuthContext reads localStorage and restores the customer session if a valid entry exists.",
-        "The customer is only sent to the login screen after an explicit logout action."
+        "No 'Authorization error' or 'Re-login' message appears anywhere in the Admin Dashboard or Admin QR Management panel.",
+        "Admin session persists across page reloads and tab switches without requiring re-authentication.",
+        "Admin (vijay@123) retains full access to all admin features without interruption.",
+        "Registration and login components are not modified."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the Logout button in the Layout component so that clicking it clears the customer or admin session from both AuthContext state and localStorage, then navigates the user back to the login/selection screen.",
-      "target": "frontend",
+      "text": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-4"
         ],
         "quotes": [
-          "Fix Logout Button: Mere app ki 'Logout' button abhi kaam nahi kar rahi hai. Ise fix karo taaki click karne par user sahi se log out ho jaye aur wapas login page par chala jaye."
+          "Fix Form Submission & Speed: Form submit hone par 'Failed' nahi hona chahiye. Backend ko optimize karo taaki data turant transfer ho aur app kabhi hang na kare."
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the Logout button clears the user session from AuthContext and localStorage.",
-        "After logout, the app navigates to the login/selection screen (LoginSelection or CustomerLogin).",
-        "The Logout button is visible and functional for both customer and admin roles.",
-        "After logout, no stale session data remains — the user cannot navigate back to protected screens without re-authenticating."
+        "Submitting a service form successfully saves the order and shows a success confirmation.",
+        "No 'Failed' error is shown on form submission under normal conditions.",
+        "Backend submitOrder function returns a response without hanging or timing out.",
+        "The app does not freeze or become unresponsive during or after form submission."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Fix the 'Unauthorized: Only authenticated users can submit orders' error in ServiceForm and any other form submission flows. Ensure that after a customer logs in, the authenticated user's principal or customer ID is correctly attached to every backend call (submitOrder and any similar mutations in useQueries.ts), so forms like 'Niwas Praman Patra' submit successfully without an unauthorized error.",
+      "text": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-4"
         ],
         "quotes": [
-          "Submit Error Fix: Jo 'Unauthorized' wala error aa raha tha, use aise theek karo ki ek baar login hone ke baad customer bina kisi rukawat ke 'Niwas Praman Patra' ya koi bhi form submit kar sake."
+          "Permanent Photo Storage: Admin dashboard mein 'Photo' button click karte hi image dikhni chahiye. ERR_FILE_NOT_FOUND ko hamesha ke liye theek karo."
         ]
       },
       "acceptanceCriteria": [
-        "A logged-in customer can submit any service form (including Niwas Praman Patra) without receiving an 'Unauthorized' error.",
-        "The customer's ID or session token is read from AuthContext and passed correctly in the submitOrder backend call.",
-        "The backend actor's submitOrder (or equivalent) function accepts the authenticated customer's ID supplied from the frontend session, not relying solely on Internet Identity principal when the app uses OTP-based custom auth.",
-        "If the session is missing or expired at submission time, the user is redirected to login with a clear message instead of showing a raw 'Unauthorized' error."
+        "Clicking the 'Photo' button on an order card in the Admin Dashboard opens or displays the attached photo immediately.",
+        "No ERR_FILE_NOT_FOUND or broken image error occurs.",
+        "Photos are displayed correctly for all previously submitted orders that included an image.",
+        "The fix works for both photo and document attachments stored as base64."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Activate Admin Buttons: 'Accept' aur 'Reject' buttons ko functional banao taaki main orders manage kar sakun."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking 'Accept' on an order card calls the backend and updates the order status to 'Accepted'.",
+        "Clicking 'Reject' on an order card calls the backend and updates the order status to 'Rejected'.",
+        "The order card reflects the updated status immediately after the action.",
+        "A success message is shown inline on the card after a successful status update.",
+        "An error message is shown if the update fails.",
+        "Registration and login components are not modified."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "Session persistence must use localStorage only — no external databases or third-party auth services.",
-    "All Motoko logic must remain in the single actor file backend/main.mo."
+    "Do NOT modify any Registration or Login components (CustomerLogin, AdminLogin) or their related auth logic.",
+    "Do NOT change the existing navigation flow, splash screen, or any working screens.",
+    "Do NOT alter frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui."
   ],
   "nonGoals": [
-    "Adding payment, AI chatbot, or order tracking features.",
-    "Changing the OTP login mechanism or introducing a new authentication method.",
-    "Redesigning the UI layout or visual theme.",
-    "Adding new services or form fields."
+    "Adding new features beyond the four fixes listed.",
+    "Changing the visual design or color theme.",
+    "Modifying the chatbot, service catalog, or contact screen.",
+    "Implementing real-time updates or WebSocket-based order tracking.",
+    "Changing the admin credentials or adding new admin users."
   ],
   "imageRequirements": {
     "required": [],

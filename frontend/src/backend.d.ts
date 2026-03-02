@@ -15,6 +15,7 @@ export interface ServiceOrder {
     photoDataBase64: string;
     orderId: bigint;
     address: string;
+    timestamp: bigint;
     customerId: string;
     mobile: string;
     amount: bigint;
@@ -37,6 +38,7 @@ export interface backendInterface {
     getAllOrders(): Promise<Array<ServiceOrder>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getLastOrderTimestamp(): Promise<bigint>;
     getOrderById(orderId: bigint): Promise<ServiceOrder | null>;
     getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
     getPermQR(): Promise<string>;
@@ -46,7 +48,8 @@ export interface backendInterface {
     loginCustomer(mobile: string, password: string): Promise<boolean>;
     registerCustomer(name: string, mobile: string, password: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setAutoQRAmount(autoAmount: bigint): Promise<void>;
     setPermQR(base64: string, autoAmount: bigint): Promise<void>;
-    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, amount: bigint): Promise<bigint>;
+    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, amount: bigint, timestamp: bigint): Promise<bigint>;
     updateOrderStatus(orderId: bigint, status: string): Promise<void>;
 }

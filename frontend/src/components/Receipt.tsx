@@ -17,10 +17,9 @@ const STATUS_STEPS = [
 
 function openAttachment(dataBase64: string, defaultMime = 'image/jpeg') {
   if (!dataBase64) return;
-  let dataUrl = dataBase64;
-  if (!dataBase64.startsWith('data:')) {
-    dataUrl = `data:${defaultMime};base64,${dataBase64}`;
-  }
+  const dataUrl = dataBase64.startsWith('data:')
+    ? dataBase64
+    : `data:${defaultMime};base64,${dataBase64}`;
   const win = window.open();
   if (win) {
     win.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;" />`);
@@ -29,7 +28,9 @@ function openAttachment(dataBase64: string, defaultMime = 'image/jpeg') {
 }
 
 export default function Receipt({ orderId, onBack }: ReceiptProps) {
-  const { data: order, isLoading, error } = useGetOrderById(orderId);
+  // Convert string orderId to bigint for the hook
+  const orderIdBigInt = orderId ? BigInt(orderId) : null;
+  const { data: order, isLoading, error } = useGetOrderById(orderIdBigInt);
 
   if (isLoading) {
     return (
@@ -69,7 +70,7 @@ export default function Receipt({ orderId, onBack }: ReceiptProps) {
       <div className="px-4 pt-4 space-y-4">
         {/* Receipt Card */}
         <div className="bg-white rounded-xl shadow-sm p-5">
-          {/* Logo / Shop Name */}
+          {/* Shop Name */}
           <div className="text-center mb-4 pb-4 border-b border-dashed border-gray-200">
             <h2 className="text-lg font-bold text-gray-800">Vijay Computer Center</h2>
             <p className="text-xs text-gray-500">Official Service Receipt</p>
@@ -100,80 +101,75 @@ export default function Receipt({ orderId, onBack }: ReceiptProps) {
           </div>
 
           {/* Amount */}
-          {order.amount > 0 && (
+          {order.amount > 0n && (
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Total Amount</span>
-                <span className="text-xl font-bold text-orange-600">₹{order.amount.toString()}</span>
+                <span className="text-sm font-medium text-orange-700">Total Amount</span>
+                <span className="text-xl font-bold text-orange-700">₹{order.amount.toString()}</span>
               </div>
             </div>
           )}
 
           {/* Status */}
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-2 font-medium">Current Status</p>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
-                order.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                order.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                'bg-orange-100 text-orange-700'
-              }`}>
-                {order.status}
-              </span>
-            </div>
+          <div className="flex justify-between text-sm mb-4">
+            <span className="text-gray-500">Status</span>
+            <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${
+              order.status === 'Completed'
+                ? 'bg-green-100 text-green-700'
+                : order.status === 'Rejected'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-orange-100 text-orange-700'
+            }`}>
+              {order.status}
+            </span>
           </div>
 
-          {/* Progress */}
-          {order.status !== 'Rejected' && stepIndex >= 0 && (
+          {/* Progress bar */}
+          {stepIndex >= 0 && (
             <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-2 font-medium">Progress</p>
-              <div className="flex items-center gap-1">
-                {STATUS_STEPS.map((step, idx) => (
-                  <div
-                    key={step}
-                    className={`flex-1 h-1.5 rounded-full ${
-                      idx <= stepIndex ? 'bg-orange-500' : 'bg-gray-200'
-                    }`}
-                    title={step}
-                  />
-                ))}
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Progress</span>
+                <span>{stepIndex + 1}/{STATUS_STEPS.length}</span>
               </div>
-              <p className="text-xs text-orange-600 mt-1 font-medium">
-                Step {stepIndex + 1} of {STATUS_STEPS.length}: {order.status}
-              </p>
-            </div>
-          )}
-
-          {/* Attachments */}
-          {(order.photoDataBase64 || order.documentDataBase64) && (
-            <div className="pt-4 border-t border-dashed border-gray-200">
-              <p className="text-xs text-gray-500 mb-2 font-medium">Attachments</p>
-              <div className="flex gap-2">
-                {order.photoDataBase64 && (
-                  <button
-                    onClick={() => openAttachment(order.photoDataBase64, 'image/jpeg')}
-                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors border border-blue-200"
-                  >
-                    📷 Photo
-                  </button>
-                )}
-                {order.documentDataBase64 && (
-                  <button
-                    onClick={() => openAttachment(order.documentDataBase64, 'application/pdf')}
-                    className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors border border-indigo-200"
-                  >
-                    📄 Document
-                  </button>
-                )}
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className="bg-orange-500 h-2 rounded-full transition-all"
+                  style={{ width: `${((stepIndex + 1) / STATUS_STEPS.length) * 100}%` }}
+                />
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer note */}
-        <div className="text-center text-xs text-gray-400 pb-4">
-          <p>Thank you for choosing Vijay Computer Center</p>
-          <p className="mt-1">For queries, please contact us</p>
+        {/* Attachments */}
+        {(order.photoDataBase64 || order.documentDataBase64) && (
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <h3 className="font-bold text-gray-800 mb-3 text-sm">Attachments</h3>
+            <div className="flex gap-2">
+              {order.photoDataBase64 && (
+                <button
+                  onClick={() => openAttachment(order.photoDataBase64, 'image/jpeg')}
+                  className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors border border-blue-200"
+                >
+                  📷 View Photo
+                </button>
+              )}
+              {order.documentDataBase64 && (
+                <button
+                  onClick={() => openAttachment(order.documentDataBase64, 'application/pdf')}
+                  className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors border border-indigo-200"
+                >
+                  📄 View Document
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-center py-4">
+          <p className="text-xs text-gray-400">Thank you for choosing Vijay Computer Center</p>
+          <p className="text-xs text-gray-400 mt-1">For queries, contact us on WhatsApp</p>
         </div>
       </div>
     </div>

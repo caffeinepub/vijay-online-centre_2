@@ -32,6 +32,7 @@ export const ServiceOrder = IDL.Record({
   'photoDataBase64' : IDL.Text,
   'orderId' : IDL.Nat,
   'address' : IDL.Text,
+  'timestamp' : IDL.Nat64,
   'customerId' : IDL.Text,
   'mobile' : IDL.Text,
   'amount' : IDL.Nat,
@@ -77,6 +78,7 @@ export const idlService = IDL.Service({
   'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getLastOrderTimestamp' : IDL.Func([], [IDL.Nat64], ['query']),
   'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
   'getOrdersByCustomer' : IDL.Func(
       [IDL.Text],
@@ -94,6 +96,7 @@ export const idlService = IDL.Service({
   'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'registerCustomer' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setAutoQRAmount' : IDL.Func([IDL.Nat], [], []),
   'setPermQR' : IDL.Func([IDL.Text, IDL.Nat], [], []),
   'submitOrder' : IDL.Func(
       [
@@ -105,6 +108,7 @@ export const idlService = IDL.Service({
         IDL.Text,
         IDL.Text,
         IDL.Nat,
+        IDL.Nat64,
       ],
       [IDL.Nat],
       [],
@@ -139,6 +143,7 @@ export const idlFactory = ({ IDL }) => {
     'photoDataBase64' : IDL.Text,
     'orderId' : IDL.Nat,
     'address' : IDL.Text,
+    'timestamp' : IDL.Nat64,
     'customerId' : IDL.Text,
     'mobile' : IDL.Text,
     'amount' : IDL.Nat,
@@ -181,6 +186,7 @@ export const idlFactory = ({ IDL }) => {
     'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getLastOrderTimestamp' : IDL.Func([], [IDL.Nat64], ['query']),
     'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
     'getOrdersByCustomer' : IDL.Func(
         [IDL.Text],
@@ -198,6 +204,7 @@ export const idlFactory = ({ IDL }) => {
     'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'registerCustomer' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setAutoQRAmount' : IDL.Func([IDL.Nat], [], []),
     'setPermQR' : IDL.Func([IDL.Text, IDL.Nat], [], []),
     'submitOrder' : IDL.Func(
         [
@@ -209,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
           IDL.Text,
           IDL.Text,
           IDL.Nat,
+          IDL.Nat64,
         ],
         [IDL.Nat],
         [],

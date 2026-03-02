@@ -1,14 +1,14 @@
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Text "mo:core/Text";
-import Nat "mo:core/Nat";
 import Iter "mo:core/Iter";
-
 import Runtime "mo:core/Runtime";
-
+import Nat "mo:core/Nat";
 import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
+import AccessControl "authorization/access-control";
+import Nat64 "mo:core/Nat64";
+import Array "mo:core/Array";
+import Order "mo:core/Order";
 
 actor {
   let accessControlState = AccessControl.initState();
@@ -37,6 +37,7 @@ actor {
     documentDataBase64 : Text;
     status : Text;
     amount : Nat;
+    timestamp : Nat64;
   };
 
   public type AdminQRSettings = {
@@ -49,6 +50,7 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   var nextOrderId = 1;
   var adminQRSettings : ?AdminQRSettings = null;
+  var lastOrderTimestamp : Nat64 = 0;
 
   func getNextId() : Nat {
     let currentId = nextOrderId;
@@ -57,20 +59,23 @@ actor {
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    checkUserRole(caller, #user);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get their profile");
+    };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller == user) {
-      return userProfiles.get(user);
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
     };
-    checkAdminRole(caller);
     userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    checkUserRole(caller, #user);
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
     userProfiles.add(caller, profile);
   };
 
@@ -80,7 +85,7 @@ actor {
     password : Text,
   ) : async () {
     if (customers.containsKey(mobile)) {
-      Runtime.trap("Customer already exists");
+      return;
     };
     let newCustomer : Customer = { name; mobile; password };
     customers.add(mobile, newCustomer);
@@ -102,14 +107,8 @@ actor {
     photoDataBase64 : Text,
     documentDataBase64 : Text,
     amount : Nat,
+    timestamp : Nat64,
   ) : async Nat {
-    switch (customers.get(customerId)) {
-      case (null) {
-        Runtime.trap("Customer does not exist");
-      };
-      case (?_) {};
-    };
-
     let orderId = getNextId();
     let newOrder : ServiceOrder = {
       orderId;
@@ -120,36 +119,85 @@ actor {
       address;
       photoDataBase64;
       documentDataBase64;
-      status = "Form Submitted";
+      status = "Pending";
       amount;
+      timestamp;
     };
     serviceOrders.add(orderId, newOrder);
+    lastOrderTimestamp := timestamp;
     orderId;
   };
 
+  func compareNat64Descending(a : Nat64, b : Nat64) : Order.Order {
+    Nat64.compare(b, a);
+  };
+
   public query ({ caller }) func getAllOrders() : async [ServiceOrder] {
-    checkAdminRole(caller);
-    serviceOrders.values().toArray();
-  };
-
-  public query ({ caller = _ }) func getOrdersByCustomer(customerId : Text) : async [ServiceOrder] {
-    switch (customers.get(customerId)) {
-      case (null) { Runtime.trap("Customer does not exist") };
-      case (?_) {};
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can view all orders");
     };
-    serviceOrders.values().toArray().filter(func(order : ServiceOrder) : Bool {
-      order.customerId == customerId;
-    });
+
+    serviceOrders.values().toArray().sort(
+      func(a, b) {
+        compareNat64Descending(a.timestamp, b.timestamp);
+      }
+    );
   };
 
-  public query ({ caller = _ }) func getOrderById(orderId : Nat) : async ?ServiceOrder {
-    serviceOrders.get(orderId);
+  public query ({ caller }) func getOrdersByCustomer(customerId : Text) : async [ServiceOrder] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+        Runtime.trap("Unauthorized: Must be logged in to view orders");
+      };
+      switch (userProfiles.get(caller)) {
+        case (null) {
+          Runtime.trap("Unauthorized: No profile found for caller");
+        };
+        case (?profile) {
+          if (profile.mobile != customerId) {
+            Runtime.trap("Unauthorized: Can only view your own orders");
+          };
+        };
+      };
+    };
+    serviceOrders.values().toArray().sort(
+      func(a, b) {
+        compareNat64Descending(a.timestamp, b.timestamp);
+      }
+    ).filter(func(order : ServiceOrder) : Bool { order.customerId == customerId });
+  };
+
+  public query ({ caller }) func getOrderById(orderId : Nat) : async ?ServiceOrder {
+    switch (serviceOrders.get(orderId)) {
+      case (null) { null };
+      case (?order) {
+        if (AccessControl.isAdmin(accessControlState, caller)) {
+          return ?order;
+        };
+        if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+          Runtime.trap("Unauthorized: Must be logged in to view order details");
+        };
+        switch (userProfiles.get(caller)) {
+          case (null) {
+            Runtime.trap("Unauthorized: No profile found for caller");
+          };
+          case (?profile) {
+            if (profile.mobile != order.customerId) {
+              Runtime.trap("Unauthorized: Can only view your own orders");
+            };
+          };
+        };
+        ?order;
+      };
+    };
   };
 
   public shared ({ caller }) func updateOrderStatus(orderId : Nat, status : Text) : async () {
-    checkAdminRole(caller);
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update order status");
+    };
     switch (serviceOrders.get(orderId)) {
-      case (null) { Runtime.trap("Order not found") };
+      case (null) { return };
       case (?order) {
         let updatedOrder : ServiceOrder = { order with status };
         serviceOrders.add(orderId, updatedOrder);
@@ -158,9 +206,25 @@ actor {
   };
 
   public shared ({ caller }) func setPermQR(base64 : Text, autoAmount : Nat) : async () {
-    checkAdminRole(caller);
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can set QR settings");
+    };
     adminQRSettings := ?{
       permanentQrKey = base64;
+      autoQrAmount = autoAmount;
+    };
+  };
+
+  public shared ({ caller }) func setAutoQRAmount(autoAmount : Nat) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can set auto QR amount");
+    };
+    let currentQrKey = switch (adminQRSettings) {
+      case (null) { "" };
+      case (?settings) { settings.permanentQrKey };
+    };
+    adminQRSettings := ?{
+      permanentQrKey = currentQrKey;
       autoQrAmount = autoAmount;
     };
   };
@@ -172,19 +236,17 @@ actor {
     };
   };
 
-  public query ({ caller = _ }) func getQRSettings() : async ?AdminQRSettings {
+  public query ({ caller }) func getQRSettings() : async ?AdminQRSettings {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can view QR settings");
+    };
     adminQRSettings;
   };
 
-  func checkAdminRole(caller : Principal) {
+  public query ({ caller }) func getLastOrderTimestamp() : async Nat64 {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
+      Runtime.trap("Unauthorized: Only admins can view timestamp");
     };
-  };
-
-  func checkUserRole(caller : Principal, requiredRole : AccessControl.UserRole) {
-    if (not (AccessControl.hasPermission(accessControlState, caller, requiredRole))) {
-      Runtime.trap("Unauthorized: Only users can perform this action");
-    };
+    lastOrderTimestamp;
   };
 };

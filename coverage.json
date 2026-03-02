@@ -1,72 +1,43 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T07:10:29.734Z",
+  "generatedAt": "2026-03-02T10:12:08.944Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 3,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
-        "status": "implemented",
+        "summary": "After a customer successfully submits a service order form, the admin dashboard must immediately reflect the new order without requiring a manual page refresh. The admin order list should be invalidated and refetched automatically upon any new order submission.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/contexts/AuthContext.tsx",
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/components/AdminQRManagement.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/ServiceForm.tsx"
         ],
-        "matchedFiles": [
-          "frontend/src/contexts/AuthContext.tsx",
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/components/AdminQRManagement.tsx",
-          "frontend/src/App.tsx"
-        ]
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
+        "summary": "The admin dashboard must poll or auto-refresh the orders list at a regular interval (e.g., every 10–15 seconds) so that any new customer submissions are visible in near real-time, even when the admin dashboard is already open.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/AdminDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/AdminDashboard.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/Receipt.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/Receipt.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
+        "summary": "Verify that the backend `getOrders` (or equivalent admin order-fetching) endpoint correctly returns all submitted orders sorted by most recent first, including orders that were just submitted moments ago. Ensure there are no in-memory or stable storage inconsistencies that could cause a freshly submitted order to be temporarily invisible.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
@@ -76,13 +47,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
     "frontend/src/components/AdminDashboard.tsx",
-    "frontend/src/components/AdminQRManagement.tsx",
-    "frontend/src/components/OrderTracking.tsx",
-    "frontend/src/components/Receipt.tsx",
-    "frontend/src/components/ServiceForm.tsx",
-    "frontend/src/contexts/AuthContext.tsx",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",

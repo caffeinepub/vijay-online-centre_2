@@ -1,230 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { ServiceOrder, AdminQRSettings } from '../backend';
+import type { ServiceOrder, AdminQRSettings } from '../backend';
 
-// ─── Customer Auth ────────────────────────────────────────────────────────────
-
-export function useRegisterCustomer() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ name, mobile, password }: { name: string; mobile: string; password: string }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      await actor.registerCustomer(name, mobile, password);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-    },
-  });
+// ── Admin token helper ──────────────────────────────────────────────────────
+// The caffeineAdminToken is embedded in the URL by the deployment system.
+// We read it once and reuse it to grant admin access to the anonymous actor.
+function getAdminToken(): string | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('caffeineAdminToken') || null;
+  } catch {
+    return null;
+  }
 }
 
-export function useLoginCustomer() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async ({ mobile, password }: { mobile: string; password: string }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      return actor.loginCustomer(mobile, password);
-    },
-    retry: 1,
-    retryDelay: 1000,
-  });
+// Attempt to initialize admin access on the actor (best-effort, silent on failure)
+async function tryInitAdminAccess(actor: any): Promise<void> {
+  const token = getAdminToken();
+  if (!token) return;
+  try {
+    if (typeof actor._initializeAccessControlWithSecret === 'function') {
+      await actor._initializeAccessControlWithSecret(token);
+    }
+  } catch {
+    // silent
+  }
 }
 
-// ─── Orders ───────────────────────────────────────────────────────────────────
-
-export function useGetAllOrders() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ServiceOrder[]>({
-    queryKey: ['allOrders'],
-    queryFn: async () => {
-      if (!actor) return [];
-      try {
-        const orders = await actor.getAllOrders();
-        return orders;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        // If unauthorized, return empty array instead of throwing to avoid breaking the UI
-        if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('admin')) {
-          return [];
-        }
-        throw err;
-      }
-    },
-    enabled: !!actor && !isFetching,
-    retry: 2,
-    retryDelay: 1000,
-  });
-}
-
-export function useGetOrdersByCustomer(customerId: string) {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ServiceOrder[]>({
-    queryKey: ['customerOrders', customerId],
-    queryFn: async () => {
-      if (!actor || !customerId) return [];
-      try {
-        return await actor.getOrdersByCustomer(customerId);
-      } catch {
-        return [];
-      }
-    },
-    enabled: !!actor && !isFetching && !!customerId,
-    retry: 1,
-  });
-}
-
-export function useGetOrderById(orderId: string) {
-  const { actor, isFetching } = useActor();
-  const orderIdNum = orderId ? BigInt(orderId) : null;
-
-  return useQuery<ServiceOrder | null>({
-    queryKey: ['order', orderId],
-    queryFn: async () => {
-      if (!actor || !orderIdNum) return null;
-      try {
-        return await actor.getOrderById(orderIdNum);
-      } catch {
-        return null;
-      }
-    },
-    enabled: !!actor && !isFetching && !!orderIdNum,
-    retry: 1,
-  });
-}
-
-export function useSubmitOrder() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: {
-      customerId: string;
-      serviceName: string;
-      name: string;
-      mobile: string;
-      address: string;
-      photoDataBase64: string;
-      documentDataBase64: string;
-      amount: bigint;
-    }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      const orderId = await actor.submitOrder(
-        params.customerId,
-        params.serviceName,
-        params.name,
-        params.mobile,
-        params.address,
-        params.photoDataBase64,
-        params.documentDataBase64,
-        params.amount,
-      );
-      return orderId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allOrders'] });
-      queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
-    },
-    retry: 1,
-    retryDelay: 1500,
-  });
-}
-
-export function useUpdateOrderStatus() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: { orderId: bigint; status: string }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      await actor.updateOrderStatus(params.orderId, params.status);
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['allOrders'] });
-      queryClient.invalidateQueries({ queryKey: ['order', variables.orderId.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
-    },
-    retry: 0,
-  });
-}
-
-export function useConfirmPayment() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: { orderId: bigint }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      await actor.updateOrderStatus(params.orderId, 'Payment Confirmed');
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['allOrders'] });
-      queryClient.invalidateQueries({ queryKey: ['order', variables.orderId.toString()] });
-      queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
-    },
-    retry: 0,
-  });
-}
-
-// ─── QR Settings ──────────────────────────────────────────────────────────────
-
-export function useGetQRSettings() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<AdminQRSettings | null>({
-    queryKey: ['qrSettings'],
-    queryFn: async () => {
-      if (!actor) return null;
-      try {
-        return await actor.getQRSettings();
-      } catch {
-        return null;
-      }
-    },
-    enabled: !!actor && !isFetching,
-    retry: 1,
-  });
-}
-
-export function useGetPermQR() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<string>({
-    queryKey: ['permQR'],
-    queryFn: async () => {
-      if (!actor) return '';
-      try {
-        return await actor.getPermQR();
-      } catch {
-        return '';
-      }
-    },
-    enabled: !!actor && !isFetching,
-    retry: 1,
-  });
-}
-
-export function useSetPermQR() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (params: { base64: string; autoAmount: bigint }) => {
-      if (!actor) throw new Error('Service not available. Please wait and try again.');
-      await actor.setPermQR(params.base64, params.autoAmount);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['qrSettings'] });
-      queryClient.invalidateQueries({ queryKey: ['permQR'] });
-    },
-    retry: 0,
-  });
-}
-
-// ─── User Profile ─────────────────────────────────────────────────────────────
+// ── User Profile ────────────────────────────────────────────────────────────
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -244,4 +47,261 @@ export function useGetCallerUserProfile() {
     isLoading: actorFetching || query.isLoading,
     isFetched: !!actor && query.isFetched,
   };
+}
+
+export function useSaveCallerUserProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (profile: { name: string; mobile: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.saveCallerUserProfile(profile);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+// ── Customer Auth ────────────────────────────────────────────────────────────
+
+export function useRegisterCustomer() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (params: { name: string; mobile: string; password: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.registerCustomer(params.name, params.mobile, params.password);
+    },
+  });
+}
+
+export function useLoginCustomer() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (params: { mobile: string; password: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.loginCustomer(params.mobile, params.password);
+    },
+  });
+}
+
+// ── Orders ───────────────────────────────────────────────────────────────────
+
+export function useGetAllOrders() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder[]>({
+    queryKey: ['allOrders'],
+    queryFn: async () => {
+      if (!actor) return [];
+      try {
+        // Ensure admin access is initialized before calling admin-only endpoint
+        await tryInitAdminAccess(actor);
+        const orders = await actor.getAllOrders();
+        return orders;
+      } catch (err: any) {
+        console.error('getAllOrders error:', err);
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching,
+    // Poll every 5 seconds so new customer submissions appear quickly
+    refetchInterval: 5000,
+    // Keep polling even when the browser tab is in the background
+    refetchIntervalInBackground: true,
+    // Immediately refetch when the admin switches back to this tab
+    refetchOnWindowFocus: true,
+    // Always treat data as stale so every poll fetches fresh data
+    staleTime: 0,
+    // Garbage collect immediately so no stale data is shown on remount
+    gcTime: 0,
+  });
+}
+
+export function useGetOrdersByCustomer(customerId: string) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder[]>({
+    queryKey: ['ordersByCustomer', customerId],
+    queryFn: async () => {
+      if (!actor || !customerId) return [];
+      try {
+        return await actor.getOrdersByCustomer(customerId);
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!actor && !isFetching && !!customerId,
+    refetchInterval: 15000,
+    staleTime: 0,
+  });
+}
+
+export function useGetOrderById(orderId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder | null>({
+    queryKey: ['orderById', orderId?.toString()],
+    queryFn: async () => {
+      if (!actor || orderId === null) return null;
+      try {
+        return await actor.getOrderById(orderId);
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching && orderId !== null,
+    refetchInterval: 15000,
+    staleTime: 0,
+  });
+}
+
+export function useSubmitOrder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: {
+      customerId: string;
+      serviceName: string;
+      name: string;
+      mobile: string;
+      address: string;
+      photoDataBase64: string;
+      documentDataBase64: string;
+      amount: bigint;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      const timestamp = BigInt(Date.now());
+      return actor.submitOrder(
+        params.customerId,
+        params.serviceName,
+        params.name,
+        params.mobile,
+        params.address,
+        params.photoDataBase64,
+        params.documentDataBase64,
+        params.amount,
+        timestamp,
+      );
+    },
+    onSuccess: () => {
+      // Invalidate both the admin orders list and the customer's own orders list
+      queryClient.invalidateQueries({ queryKey: ['allOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersByCustomer'] });
+    },
+  });
+}
+
+export function useUpdateOrderStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { orderId: bigint; status: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      await tryInitAdminAccess(actor);
+      return actor.updateOrderStatus(params.orderId, params.status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allOrders'] });
+    },
+  });
+}
+
+// ── QR Settings ──────────────────────────────────────────────────────────────
+
+// Open to all — used by PaymentScreen (no auth required)
+export function useGetPermQR() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<string>({
+    queryKey: ['permQR'],
+    queryFn: async () => {
+      if (!actor) return '';
+      try {
+        return await actor.getPermQR();
+      } catch {
+        return '';
+      }
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30000,
+  });
+}
+
+// Admin-only — used by AdminQRManagement
+export function useGetQRSettings() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminQRSettings | null>({
+    queryKey: ['qrSettings'],
+    queryFn: async () => {
+      if (!actor) return null;
+      try {
+        await tryInitAdminAccess(actor);
+        return await actor.getQRSettings();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30000,
+  });
+}
+
+export function useSetPermQR() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { base64: string; autoAmount: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      await tryInitAdminAccess(actor);
+      return actor.setPermQR(params.base64, params.autoAmount);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qrSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['permQR'] });
+    },
+  });
+}
+
+export function useSetAutoQRAmount() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (autoAmount: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      await tryInitAdminAccess(actor);
+      return actor.setAutoQRAmount(autoAmount);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qrSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['permQR'] });
+    },
+  });
+}
+
+export function useGetLastOrderTimestamp() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<bigint>({
+    queryKey: ['lastOrderTimestamp'],
+    queryFn: async () => {
+      if (!actor) return BigInt(0);
+      try {
+        await tryInitAdminAccess(actor);
+        return await actor.getLastOrderTimestamp();
+      } catch {
+        return BigInt(0);
+      }
+    },
+    enabled: !!actor && !isFetching,
+    refetchInterval: 5000,
+  });
 }

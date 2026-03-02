@@ -22,6 +22,7 @@ export interface ServiceOrder {
   'photoDataBase64' : string,
   'orderId' : bigint,
   'address' : string,
+  'timestamp' : bigint,
   'customerId' : string,
   'mobile' : string,
   'amount' : bigint,
@@ -62,6 +63,7 @@ export interface _SERVICE {
   'getAllOrders' : ActorMethod<[], Array<ServiceOrder>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getLastOrderTimestamp' : ActorMethod<[], bigint>,
   'getOrderById' : ActorMethod<[bigint], [] | [ServiceOrder]>,
   'getOrdersByCustomer' : ActorMethod<[string], Array<ServiceOrder>>,
   'getPermQR' : ActorMethod<[], string>,
@@ -71,9 +73,10 @@ export interface _SERVICE {
   'loginCustomer' : ActorMethod<[string, string], boolean>,
   'registerCustomer' : ActorMethod<[string, string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setAutoQRAmount' : ActorMethod<[bigint], undefined>,
   'setPermQR' : ActorMethod<[string, bigint], undefined>,
   'submitOrder' : ActorMethod<
-    [string, string, string, string, string, string, string, bigint],
+    [string, string, string, string, string, string, string, bigint, bigint],
     bigint
   >,
   'updateOrderStatus' : ActorMethod<[bigint, string], undefined>,

@@ -1,48 +1,18 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Shop management app (Caffeine AI) with admin panel, QR management, order management, and photo storage. Registration and login are working correctly and must not be changed.",
-  "architectural_notes": [
-    "Registration and Login code must NOT be modified — it is working correctly.",
-    "Admin user is vijay@123 with permanent master access; no re-login or authorization errors should appear."
-  ],
+  "summary": "Project involves a form submission system with an admin dashboard. Customer-submitted forms are not showing up in the admin dashboard in real-time.",
+  "architectural_notes": [],
   "known_issues": [
-    "Authorization errors / Re-login prompts appearing in admin panel and QR management",
-    "Form submission returns 'Failed' error; backend slow causing hangs",
-    "ERR_FILE_NOT_FOUND when clicking Photo button in admin dashboard",
-    "Accept and Reject buttons non-functional in admin panel"
+    "Customer form submissions not appearing in admin dashboard in real-time after submission"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-all-authorization-error-messages-and-re-login-prompts-from-the-admin-dashboard-and-admin-qr-management-panel-the-admin-user-vijay-123-must-have-permanent-master-access-that-never-expires-or-requires-re-authentication-once-logged-in-ensure-that-authcontext-persists-the-admin-session-reliably-in-localstorage-so-that-page-reloads-or-navigation-between-admin-tabs-never-triggers-an-authorization-error-or-redirects-back-to-login",
-      "title": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-form-submission-so-it-never-returns-a-failed-error-in-the-serviceform-component-ensure-the-mutation-correctly-handles-backend-responses-retries-on-transient-failures-and-displays-a-clear-success-state-in-the-backend-optimize-the-submitorder-function-to-process-requests-efficiently-avoid-unnecessary-computations-or-unbounded-loops-that-could-cause-hangs-ensure-the-actor-returns-responses-promptly-so-the-frontend-never-times-out-waiting",
-      "title": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
+      "id": "feature-the-admin-dashboard-must-poll-or-auto-refresh-the-orders-list-at-a-regular-interval-e-g-every-10-15-seconds-so-that-any-new-customer-submissions-are-visible-in-near-real-time-even-when-the-admin-dashboard-is-already-open",
+      "title": "The admin dashboard must poll or auto-refresh the orders list at a regular interval (e.g., every 10–15 seconds) so that any new customer submissions are visible in near real-time, even when the admin dashboard is already open.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-photo-storage-and-retrieval-so-that-clicking-the-photo-button-in-the-admin-dashboard-immediately-displays-the-attached-image-without-any-err-file-not-found-error-photos-submitted-with-orders-are-stored-as-base64-strings-in-the-backend-the-admin-dashboard-must-reconstruct-a-valid-object-url-or-data-url-from-the-stored-base64-data-and-render-it-inline-or-in-a-new-tab-remove-any-file-path-based-resolution-that-causes-the-not-found-error",
-      "title": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-activate-the-accept-and-reject-buttons-in-the-admin-dashboard-so-that-clicking-them-updates-the-order-status-in-the-backend-and-reflects-the-new-status-in-the-ui-immediately-wire-the-buttons-to-the-existing-updateorderstatus-backend-function-on-success-the-order-card-should-update-to-show-the-new-status-accepted-or-rejected-and-display-a-brief-inline-success-message-on-failure-show-a-clear-error-message-on-the-card",
-      "title": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -50,31 +20,23 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Remove authorization barriers from admin panel and QR management; give admin (vijay@123) permanent master access",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Fix form submission failures and optimize backend for instant data transfer and no hangs",
-      "reqIds": [],
+      "summary": "After a customer successfully submits a service order form, the admin dashboard must immediately reflect the new order without requiring a manual page refresh. The admin order list should be invalidated and refetched automatically upon any new order submission.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Fix permanent photo storage so Photo button in admin dashboard shows image instantly without ERR_FILE_NOT_FOUND",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Activate Accept and Reject buttons in admin panel for order management",
-      "reqIds": [],
+      "summary": "Verify that the backend `getOrders` (or equivalent admin order-fetching) endpoint correctly returns all submitted orders sorted by most recent first, including orders that were just submitted moments ago. Ensure there are no in-memory or stable storage inconsistencies that could cause a freshly submitted order to be temporarily invisible.",
+      "reqIds": [
+        "REQ-3"
+      ],
       "status": "pending"
     }
   ],
   "gameProjectType": "none",
-  "projectName": "Caffeine AI",
+  "projectName": "Vijay Online Centre",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

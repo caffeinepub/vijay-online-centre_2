@@ -1,99 +1,72 @@
 {
   "kind": "build_request",
-  "title": "Fix Authorization Barriers, Form Submission, Photo Storage & Admin Buttons",
+  "title": "Fix: Customer form submissions not appearing in admin dashboard immediately after submission",
   "projectName": "Vijay Online Centre",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. The admin user (vijay@123) must have permanent master access that never expires or requires re-authentication once logged in. Ensure that AuthContext persists the admin session reliably in localStorage so that page reloads or navigation between admin tabs never triggers an authorization error or redirects back to login.",
+      "text": "After a customer successfully submits a service order form, the admin dashboard must immediately reflect the new order without requiring a manual page refresh. The admin order list should be invalidated and refetched automatically upon any new order submission.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Remove All Authorization Barriers: Admin panel aur QR Management se 'Authorization error' ya 'Re-login' ka message hamesha ke liye hatao. Admin (vijay@123) ko permanent master access do."
+          "Jab customer Abhi Abhi turant hi Apna form fil Kiya lekin abhi admin ke dust board Mein show nahin kar raha hai form"
         ]
       },
       "acceptanceCriteria": [
-        "No 'Authorization error' or 'Re-login' message appears anywhere in the Admin Dashboard or Admin QR Management panel.",
-        "Admin session persists across page reloads and tab switches without requiring re-authentication.",
-        "Admin (vijay@123) retains full access to all admin features without interruption.",
-        "Registration and login components are not modified."
+        "When a customer submits a service form, the new order appears in the admin dashboard without any manual refresh.",
+        "The admin dashboard order list is automatically re-fetched/invalidated after a new order is created.",
+        "No stale cache prevents the new order from being visible to the admin immediately after submission."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix form submission so it never returns a 'Failed' error. In the ServiceForm component, ensure the mutation correctly handles backend responses, retries on transient failures, and displays a clear success state. In the backend, optimize the submitOrder function to process requests efficiently — avoid unnecessary computations or unbounded loops that could cause hangs. Ensure the actor returns responses promptly so the frontend never times out waiting.",
-      "target": "both",
+      "text": "The admin dashboard must poll or auto-refresh the orders list at a regular interval (e.g., every 10–15 seconds) so that any new customer submissions are visible in near real-time, even when the admin dashboard is already open.",
+      "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Fix Form Submission & Speed: Form submit hone par 'Failed' nahi hona chahiye. Backend ko optimize karo taaki data turant transfer ho aur app kabhi hang na kare."
+          "abhi admin ke dust board Mein show nahin kar raha hai form"
         ]
       },
       "acceptanceCriteria": [
-        "Submitting a service form successfully saves the order and shows a success confirmation.",
-        "No 'Failed' error is shown on form submission under normal conditions.",
-        "Backend submitOrder function returns a response without hanging or timing out.",
-        "The app does not freeze or become unresponsive during or after form submission."
+        "The admin dashboard periodically refetches the orders list automatically while the admin is on the dashboard screen.",
+        "New orders submitted by customers appear in the admin view within the polling interval without any manual action."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Fix the photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos submitted with orders are stored as base64 strings in the backend. The admin dashboard must reconstruct a valid object URL or data URL from the stored base64 data and render it inline or in a new tab. Remove any file-path-based resolution that causes the not-found error.",
-      "target": "both",
+      "text": "Verify that the backend `getOrders` (or equivalent admin order-fetching) endpoint correctly returns all submitted orders sorted by most recent first, including orders that were just submitted moments ago. Ensure there are no in-memory or stable storage inconsistencies that could cause a freshly submitted order to be temporarily invisible.",
+      "target": "backend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Permanent Photo Storage: Admin dashboard mein 'Photo' button click karte hi image dikhni chahiye. ERR_FILE_NOT_FOUND ko hamesha ke liye theek karo."
+          "Jab customer Abhi Abhi turant hi Apna form fil Kiya lekin abhi admin ke dust board Mein show nahin kar raha hai form"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the 'Photo' button on an order card in the Admin Dashboard opens or displays the attached photo immediately.",
-        "No ERR_FILE_NOT_FOUND or broken image error occurs.",
-        "Photos are displayed correctly for all previously submitted orders that included an image.",
-        "The fix works for both photo and document attachments stored as base64."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the existing updateOrderStatus backend function. On success, the order card should update to show the new status ('Accepted' or 'Rejected') and display a brief inline success message. On failure, show a clear error message on the card.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Activate Admin Buttons: 'Accept' aur 'Reject' buttons ko functional banao taaki main orders manage kar sakun."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Clicking 'Accept' on an order card calls the backend and updates the order status to 'Accepted'.",
-        "Clicking 'Reject' on an order card calls the backend and updates the order status to 'Rejected'.",
-        "The order card reflects the updated status immediately after the action.",
-        "A success message is shown inline on the card after a successful status update.",
-        "An error message is shown if the update fails.",
-        "Registration and login components are not modified."
+        "Immediately after a `submitOrder` call succeeds, a subsequent `getOrders` call returns the new order.",
+        "Orders are returned sorted with the newest order first.",
+        "No race condition or buffering in the backend causes a submitted order to be omitted from the list."
       ]
     }
   ],
   "constraints": [
-    "Do NOT modify any Registration or Login components (CustomerLogin, AdminLogin) or their related auth logic.",
-    "Do NOT change the existing navigation flow, splash screen, or any working screens.",
-    "Do NOT alter frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui."
+    "Do not change the customer-facing service form submission flow or its success screen.",
+    "Do not alter authentication logic in AuthContext or useInternetIdentity hooks.",
+    "All Motoko logic must remain in the single main actor file (backend/main.mo)."
   ],
   "nonGoals": [
-    "Adding new features beyond the four fixes listed.",
-    "Changing the visual design or color theme.",
-    "Modifying the chatbot, service catalog, or contact screen.",
-    "Implementing real-time updates or WebSocket-based order tracking.",
-    "Changing the admin credentials or adding new admin users."
+    "Real-time WebSocket or push notification support.",
+    "Changes to the QR code management feature.",
+    "Any modifications to the customer login or registration flow."
   ],
   "imageRequirements": {
     "required": [],

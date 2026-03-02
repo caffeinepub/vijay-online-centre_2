@@ -27,10 +27,9 @@ function getStepIndex(status: string): number {
 
 function openAttachment(dataBase64: string, defaultMime = 'image/jpeg') {
   if (!dataBase64) return;
-  let dataUrl = dataBase64;
-  if (!dataBase64.startsWith('data:')) {
-    dataUrl = `data:${defaultMime};base64,${dataBase64}`;
-  }
+  const dataUrl = dataBase64.startsWith('data:')
+    ? dataBase64
+    : `data:${defaultMime};base64,${dataBase64}`;
   const win = window.open();
   if (win) {
     win.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;" />`);
@@ -39,7 +38,9 @@ function openAttachment(dataBase64: string, defaultMime = 'image/jpeg') {
 }
 
 export default function OrderTracking({ orderId, onBack, onViewReceipt }: OrderTrackingProps) {
-  const { data: order, isLoading, error } = useGetOrderById(orderId);
+  // Convert string orderId to bigint for the hook
+  const orderIdBigInt = orderId ? BigInt(orderId) : null;
+  const { data: order, isLoading, error } = useGetOrderById(orderIdBigInt);
 
   if (isLoading) {
     return (
@@ -92,7 +93,7 @@ export default function OrderTracking({ orderId, onBack, onViewReceipt }: OrderT
             </span>
           </div>
           <p className="text-xs text-gray-500">{order.address}</p>
-          {order.amount > 0 && (
+          {order.amount > 0n && (
             <p className="text-sm font-bold text-orange-600 mt-2">Amount: ₹{order.amount.toString()}</p>
           )}
         </div>
@@ -121,7 +122,9 @@ export default function OrderTracking({ orderId, onBack, onViewReceipt }: OrderT
                       {isCompleted ? '✓' : idx + 1}
                     </div>
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${isCurrent ? 'text-orange-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}>
+                      <p className={`text-sm font-medium ${
+                        isCurrent ? 'text-orange-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'
+                      }`}>
                         {step}
                       </p>
                       {isCurrent && (

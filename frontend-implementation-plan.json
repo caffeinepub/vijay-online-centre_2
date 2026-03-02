@@ -1,110 +1,41 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Authorization Barriers, Form Submission, Photo Storage & Admin Buttons",
+  "title": "Fix: Customer form submissions not appearing in admin dashboard immediately after submission",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove all authorization error messages and re-login prompts from the Admin Dashboard and Admin QR Management panel. Ensure admin session persists reliably across page reloads and navigation without triggering authorization errors or login redirects.",
+      "summary": "Invalidate and refetch admin order list automatically when a customer submits a service order form",
       "acceptanceCriteria": [
-        "No 'Authorization error' or 'Re-login' message appears anywhere in the Admin Dashboard or Admin QR Management panel.",
-        "Admin session persists across page reloads and tab switches without requiring re-authentication.",
-        "Admin (vijay@123) retains full access to all admin features without interruption.",
-        "Registration and login components are not modified."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/contexts/AuthContext.tsx",
-          "operation": "modify",
-          "description": "Strengthen admin session persistence by ensuring localStorage writes complete before any navigation or state changes. Add defensive checks to prevent premature session invalidation. Ensure the isAdminLoggedIn getter and adminLogin method reliably persist the admin flag and never clear it unless explicitly logged out."
-        },
-        {
-          "path": "frontend/src/components/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Remove any authorization check that triggers error messages or redirects. Remove error boundaries or retry prompts that suggest re-login. Ensure the component relies solely on AuthContext.isAdminLoggedIn for access control and does not introduce additional guards that could fail. Remove any backend authorization error handling that would display 'Authorization error' messages to the admin."
-        },
-        {
-          "path": "frontend/src/components/AdminQRManagement.tsx",
-          "operation": "modify",
-          "description": "Remove any authorization check that triggers error messages or redirects. Remove error boundaries or retry prompts that suggest re-login. Ensure the component relies solely on AuthContext.isAdminLoggedIn for access control and does not introduce additional guards that could fail. Remove any backend authorization error handling that would display 'Authorization error' messages to the admin."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Review and strengthen the admin routing logic to ensure that once an admin is logged in (via AuthContext.isAdminLoggedIn), the app never redirects them back to the login screen or displays authorization barriers when navigating between admin tabs (AdminDashboard, AdminQRManagement). Ensure that the screen state machine does not reset admin auth on page reload."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Fix form submission so it never returns a 'Failed' error. Ensure the ServiceForm component correctly handles backend responses, retries on transient failures, and displays a clear success state. Optimize mutation error handling to prevent timeouts and show helpful feedback.",
-      "acceptanceCriteria": [
-        "Submitting a service form successfully saves the order and shows a success confirmation.",
-        "No 'Failed' error is shown on form submission under normal conditions.",
-        "Backend submitOrder function returns a response without hanging or timing out.",
-        "The app does not freeze or become unresponsive during or after form submission."
+        "When a customer submits a service form, the new order appears in the admin dashboard without any manual refresh.",
+        "The admin dashboard order list is automatically re-fetched/invalidated after a new order is created.",
+        "No stale cache prevents the new order from being visible to the admin immediately after submission."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ServiceForm.tsx",
           "operation": "modify",
-          "description": "Review the form submission mutation logic to ensure it handles all backend response states gracefully. Add retry logic for transient network failures. Ensure success state is clearly displayed (e.g., a success message or redirect to order tracking). Remove or refine any error handling that results in a generic 'Failed' message without context. Add loading indicators during submission to prevent user confusion. Verify that the mutation calls the backend submitOrder function correctly and awaits the response without timing out prematurely."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Review the useSubmitOrder mutation hook to ensure it has appropriate timeout settings, retry configurations, and error parsing. Ensure the mutation onSuccess callback is invoked correctly and that errors are surfaced with actionable messages rather than generic failures. Add defensive parsing for backend responses to handle edge cases gracefully."
+          "description": "After successfully submitting an order via the `submitOrderMutation`, invalidate the `allOrders` query key using `queryClient.invalidateQueries(['allOrders'])`. This ensures that any admin dashboard viewing the orders list will have its cache invalidated and will refetch the latest data, making the newly submitted order immediately visible to admins without requiring a manual refresh."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Fix photo storage and retrieval so that clicking the 'Photo' button in the Admin Dashboard immediately displays the attached image without any ERR_FILE_NOT_FOUND error. Photos are stored as base64 strings in the backend; the frontend must reconstruct a valid data URL or object URL and render it inline or in a new tab.",
+      "id": "REQ-2",
+      "summary": "Implement periodic auto-refresh of the admin orders list at regular intervals to display new submissions in near real-time",
       "acceptanceCriteria": [
-        "Clicking the 'Photo' button on an order card in the Admin Dashboard opens or displays the attached photo immediately.",
-        "No ERR_FILE_NOT_FOUND or broken image error occurs.",
-        "Photos are displayed correctly for all previously submitted orders that included an image.",
-        "The fix works for both photo and document attachments stored as base64."
+        "The admin dashboard periodically refetches the orders list automatically while the admin is on the dashboard screen.",
+        "New orders submitted by customers appear in the admin view within the polling interval without any manual action."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/components/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Modify the 'Photo' button click handler to reconstruct a data URL from the order.photoDataBase64 field (format: data:image/<type>;base64,<base64string>). If the base64 string already includes the data URL prefix, use it directly; otherwise, prepend 'data:image/jpeg;base64,' or detect the MIME type if possible. Open the data URL in a new tab or display it inline in a modal. Remove any file-path-based URL construction that causes ERR_FILE_NOT_FOUND. Apply the same logic to the document button handler for order.documentDataBase64."
-        },
-        {
-          "path": "frontend/src/components/OrderTracking.tsx",
-          "operation": "modify",
-          "description": "Review the attachment viewer logic and ensure that if photo or document data is displayed, it uses a data URL reconstructed from the base64 field (order.photoDataBase64 or order.documentDataBase64) rather than a file path. Ensure no broken image links or ERR_FILE_NOT_FOUND errors occur when viewing attachments from the order detail page."
-        },
-        {
-          "path": "frontend/src/components/Receipt.tsx",
-          "operation": "modify",
-          "description": "Review the attachment display logic and ensure that if photo or document data is shown, it uses a data URL reconstructed from the base64 field (order.photoDataBase64 or order.documentDataBase64) rather than a file path. Ensure no broken image links or ERR_FILE_NOT_FOUND errors occur when viewing attachments from the receipt page."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Activate the 'Accept' and 'Reject' buttons in the Admin Dashboard so that clicking them updates the order status in the backend and reflects the new status in the UI immediately. Wire the buttons to the backend updateOrderStatus function. On success, show an inline success message on the card; on failure, show a clear error message.",
-      "acceptanceCriteria": [
-        "Clicking 'Accept' on an order card calls the backend and updates the order status to 'Accepted'.",
-        "Clicking 'Reject' on an order card calls the backend and updates the order status to 'Rejected'.",
-        "The order card reflects the updated status immediately after the action.",
-        "A success message is shown inline on the card after a successful status update.",
-        "An error message is shown if the update fails.",
-        "Registration and login components are not modified."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Wire the 'Accept' and 'Reject' buttons to call the backend updateOrderStatus function via a React Query mutation (likely from useQueries.ts). Pass the orderId and the new status ('Accepted' or 'Rejected') to the mutation. On mutation success, invalidate the orders query to refresh the list and display an inline success message on the affected order card. On mutation error, display an inline error message on the card. Ensure the UI updates immediately after the backend confirms the status change."
-        },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Ensure a useUpdateOrderStatus mutation hook exists that calls actor.updateOrderStatus(orderId, status). If it does not exist, create it. Ensure the mutation includes onSuccess and onError callbacks that allow the AdminDashboard component to react appropriately (e.g., invalidate queries, show feedback). Ensure the mutation does not cause UI freezes or silent failures."
+          "description": "Update the `useGetAllOrders` hook to enable React Query's `refetchInterval` option set to 15000 milliseconds (15 seconds). This will cause the query to automatically refetch the orders list every 15 seconds when the admin dashboard is active, ensuring new customer submissions appear in near real-time without requiring any manual refresh action by the admin."
+        },
+        {
+          "path": "frontend/src/components/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Ensure the `useGetAllOrders` hook is used with the updated polling configuration. Optionally display a subtle indicator (e.g., a timestamp or sync icon) showing when the orders list was last refreshed, providing feedback to the admin that the data is being kept up-to-date automatically."
         }
       ]
     }

@@ -97,6 +97,7 @@ export interface ServiceOrder {
     photoDataBase64: string;
     orderId: bigint;
     address: string;
+    timestamp: bigint;
     customerId: string;
     mobile: string;
     amount: bigint;
@@ -137,6 +138,7 @@ export interface backendInterface {
     getAllOrders(): Promise<Array<ServiceOrder>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getLastOrderTimestamp(): Promise<bigint>;
     getOrderById(orderId: bigint): Promise<ServiceOrder | null>;
     getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
     getPermQR(): Promise<string>;
@@ -146,8 +148,9 @@ export interface backendInterface {
     loginCustomer(mobile: string, password: string): Promise<boolean>;
     registerCustomer(name: string, mobile: string, password: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setAutoQRAmount(autoAmount: bigint): Promise<void>;
     setPermQR(base64: string, autoAmount: bigint): Promise<void>;
-    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, amount: bigint): Promise<bigint>;
+    submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, amount: bigint, timestamp: bigint): Promise<bigint>;
     updateOrderStatus(orderId: bigint, status: string): Promise<void>;
 }
 import type { AdminQRSettings as _AdminQRSettings, ServiceOrder as _ServiceOrder, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
@@ -307,6 +310,20 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getLastOrderTimestamp(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLastOrderTimestamp();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLastOrderTimestamp();
+            return result;
+        }
+    }
     async getOrderById(arg0: bigint): Promise<ServiceOrder | null> {
         if (this.processError) {
             try {
@@ -433,6 +450,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setAutoQRAmount(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setAutoQRAmount(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setAutoQRAmount(arg0);
+            return result;
+        }
+    }
     async setPermQR(arg0: string, arg1: bigint): Promise<void> {
         if (this.processError) {
             try {
@@ -447,17 +478,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitOrder(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: string, arg7: bigint): Promise<bigint> {
+    async submitOrder(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: string, arg7: bigint, arg8: bigint): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            const result = await this.actor.submitOrder(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             return result;
         }
     }

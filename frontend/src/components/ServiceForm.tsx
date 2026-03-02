@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Upload, CheckCircle, X, FileText } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, X, FileText, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubmitOrder } from '../hooks/useQueries';
 import { ExternalBlob } from '../lib/blobStorage';
@@ -14,7 +14,7 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
   const { customerSession } = useAuth();
   const submitOrder = useSubmitOrder();
 
-  const [name, setName] = useState(customerSession?.name || '');
+  const [name, setName] = useState(customerSession?.name && customerSession.name !== customerSession.mobile ? customerSession.name : '');
   const [mobile, setMobile] = useState(customerSession?.mobile || '');
   const [address, setAddress] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -22,6 +22,30 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Guard: customer must be logged in to submit
+  if (!customerSession) {
+    return (
+      <div className="min-h-full flex flex-col items-center justify-center px-6"
+        style={{ background: 'oklch(0.14 0.04 240)' }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+          style={{ background: 'oklch(0.577 0.245 27.325 / 20%)', border: '2px solid oklch(0.577 0.245 27.325 / 40%)' }}>
+          <AlertCircle size={32} style={{ color: 'oklch(0.85 0.15 27)' }} />
+        </div>
+        <h2 className="text-lg font-bold text-center mb-2" style={{ color: 'oklch(0.97 0.005 240)' }}>
+          Login Required
+        </h2>
+        <p className="text-sm text-center mb-6" style={{ color: 'oklch(0.72 0.015 240)' }}>
+          Aapko form submit karne ke liye pehle login karna hoga.
+        </p>
+        <button onClick={onBack}
+          className="px-8 py-3 rounded-xl font-semibold transition-all active:scale-95"
+          style={{ background: 'linear-gradient(135deg, oklch(0.72 0.14 85), oklch(0.82 0.12 85))', color: 'oklch(0.14 0.04 240)' }}>
+          Wapas Jao
+        </button>
+      </div>
+    );
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -38,6 +62,12 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Ensure customer is still logged in
+    if (!customerSession || !customerSession.mobile) {
+      setError('Session expired. Please log in again.');
+      return;
+    }
 
     if (!name.trim() || !mobile.trim() || !address.trim()) {
       setError('Please fill in all required fields.');
@@ -59,8 +89,11 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
         documentKey = blob.getDirectURL();
       }
 
+      // Always use the logged-in customer's mobile as customerId
+      const customerId = customerSession.mobile;
+
       const orderId = await submitOrder.mutateAsync({
-        customerId: customerSession?.mobile || mobile,
+        customerId,
         serviceName,
         name: name.trim(),
         mobile: mobile.trim(),
@@ -72,7 +105,13 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
       setSubmitted(true);
       onSuccess(orderId.toString());
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+      const message = err instanceof Error ? err.message : 'Submission failed. Please try again.';
+      // Provide user-friendly message for auth errors
+      if (message.toLowerCase().includes('unauthorized') || message.toLowerCase().includes('no registered customer')) {
+        setError('Session expired or account not found. Please log out and log in again.');
+      } else {
+        setError(message);
+      }
     }
   };
 
@@ -116,7 +155,7 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
             {serviceName}
           </h1>
           <p className="text-xs" style={{ color: 'oklch(0.62 0.015 240)' }}>
-            Application Form
+            Application Form · Logged in as {customerSession.mobile}
           </p>
         </div>
       </div>
@@ -224,25 +263,28 @@ export default function ServiceForm({ serviceName, onBack, onSuccess }: ServiceF
         {submitOrder.isPending && uploadProgress > 0 && uploadProgress < 100 && (
           <div>
             <div className="flex justify-between text-xs mb-1" style={{ color: 'oklch(0.72 0.015 240)' }}>
-              <span>Uploading...</span>
+              <span>Uploading document...</span>
               <span>{uploadProgress}%</span>
             </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'oklch(0.22 0.06 240)' }}>
-              <div className="h-full rounded-full transition-all"
-                style={{ width: `${uploadProgress}%`, background: 'linear-gradient(90deg, oklch(0.72 0.14 85), oklch(0.82 0.12 85))' }} />
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'oklch(0.22 0.06 240)' }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${uploadProgress}%`, background: 'linear-gradient(90deg, oklch(0.72 0.14 85), oklch(0.82 0.12 85))' }}
+              />
             </div>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="px-4 py-3 rounded-xl text-sm"
+          <div className="px-4 py-3 rounded-xl text-sm flex items-start gap-2"
             style={{ background: 'oklch(0.577 0.245 27.325 / 20%)', border: '1px solid oklch(0.577 0.245 27.325 / 40%)', color: 'oklch(0.85 0.15 27)' }}>
-            {error}
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={submitOrder.isPending}

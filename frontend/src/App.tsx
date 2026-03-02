@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import SplashScreen from './components/SplashScreen';
 import LoginSelection from './components/LoginSelection';
 import AdminLogin from './components/AdminLogin';
@@ -29,10 +29,22 @@ type Screen =
   | { type: 'admin-qr' };
 
 function AppContent() {
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated, customerSession } = useAuth();
   const [screen, setScreen] = useState<Screen>({ type: 'splash' });
+  // Track whether splash has completed at least once
+  const splashDoneRef = useRef(false);
+
+  // When auth state changes to unauthenticated (after logout), redirect to login-selection
+  useEffect(() => {
+    // Only redirect after splash is done and we're in an authenticated screen
+    if (!splashDoneRef.current) return;
+    if (!isAuthenticated) {
+      setScreen({ type: 'login-selection' });
+    }
+  }, [isAuthenticated]);
 
   const handleSplashComplete = useCallback(() => {
+    splashDoneRef.current = true;
     if (isAuthenticated) {
       setScreen({ type: 'main', tab: isAdmin ? 'dashboard' : 'home' });
     } else {
@@ -50,6 +62,10 @@ function AppContent() {
 
   const handleNavigate = useCallback((tab: string) => {
     setScreen({ type: 'main', tab });
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setScreen({ type: 'login-selection' });
   }, []);
 
   const handleSelectService = useCallback((serviceName: string) => {
@@ -109,6 +125,15 @@ function AppContent() {
 
   // Service form (outside layout for full screen)
   if (screen.type === 'service-form') {
+    // Guard: if not authenticated, redirect to login
+    if (!isAuthenticated || (!customerSession && !isAdmin)) {
+      return (
+        <LoginSelection
+          onAdminLogin={() => setScreen({ type: 'admin-login' })}
+          onCustomerLogin={() => setScreen({ type: 'customer-login' })}
+        />
+      );
+    }
     return (
       <div className="h-screen overflow-y-auto" style={{ background: 'oklch(0.14 0.04 240)' }}>
         <ServiceForm
@@ -205,7 +230,7 @@ function AppContent() {
     };
 
     return (
-      <Layout activeTab={activeTab} onNavigate={handleNavigate}>
+      <Layout activeTab={activeTab} onNavigate={handleNavigate} onLogout={handleLogout}>
         {renderContent()}
       </Layout>
     );

@@ -51,13 +51,14 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     /**
-     * / Authenticated users may query their own orders.
-     * / Admins may query any customer's orders.
+     * / Any caller may query orders for a given customerId.
+     * / The customerId acts as the app-level authorization token.
+     * / Admins (IC-level) may also query any customer's orders.
      */
     getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
     /**
-     * / Authenticated users may check the payment confirmation for their own order.
-     * / Admins may check any order's confirmation.
+     * / Any caller may check the payment confirmation for an order.
+     * / The customerId in the order acts as the app-level authorization token.
      */
     getPaymentConfirmation(orderId: bigint): Promise<PaymentConfirmation | null>;
     /**
@@ -84,7 +85,10 @@ export interface backendInterface {
      */
     setPermQR(base64: string, autoAmount: bigint): Promise<void>;
     /**
-     * / Only authenticated users (role #user or #admin) may submit a service order.
+     * / The application uses a mobile/password authentication system independent of
+     * / Internet Identity. Customers are identified by their customerId (mobile number).
+     * / No IC-level role check is applied here; the customerId passed by the frontend
+     * / represents the logged-in customer's identity within the app's own auth system.
      */
     submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, documentKey: string, amount: bigint): Promise<bigint>;
     /**

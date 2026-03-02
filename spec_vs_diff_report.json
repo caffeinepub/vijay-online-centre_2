@@ -1,127 +1,20 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T13:04:59.007Z",
-  "summary": "The diff implements a comprehensive digital service platform covering most of the specified requirements. The frontend includes splash screen, admin/customer login, service catalog, service forms, order tracking, receipt, admin dashboard, QR management, contact, chatbot, and layout components. The backend Motoko actor covers customer registration, order management, QR settings, and payment confirmation. However, several specific acceptance criteria have gaps or are partially implemented.",
-  "missing_requirements": [
-    {
-      "requirement": "The uploaded UPI QR image (IMG_20260228_093258.jpg — ICICI Bank PhonePe QR) must be used as the default pre-loaded permanent QR. The 'Use Default QR' handler in AdminQRManagement instead references the logo asset path rather than the actual ICICI Bank PhonePe QR image.",
-      "reason": "AdminQRManagement.tsx sets the default QR to '/assets/generated/vijay-logo.dim_512x512.png' (the logo), not the ICICI Bank QR. The actual QR image asset is never referenced or bundled.",
-      "evidence": [
-        "frontend/src/components/AdminQRManagement.tsx"
-      ]
-    },
-    {
-      "requirement": "REQ-13: All data persists across canister upgrades using stable variables. The backend uses Map.empty (in-memory) for customers, serviceOrders, paymentConfirmations, and userProfiles without stable variable declarations or pre/postupgrade hooks.",
-      "reason": "The backend main.mo uses let customers = Map.empty, let serviceOrders = Map.empty, etc. without stable var declarations or upgrade hooks, meaning data will not survive canister upgrades.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "requirement": "REQ-7: Auto QR Generate Mode — admin inputs a specific amount and a UPI payment QR code is dynamically generated using a QR library encoding a UPI deep-link string.",
-      "reason": "PaymentScreen.tsx uses a custom canvas-based pseudo-QR renderer rather than an actual QR code library, so the generated image is not a scannable UPI QR code.",
-      "evidence": [
-        "frontend/src/components/PaymentScreen.tsx"
-      ]
-    },
-    {
-      "requirement": "REQ-9: Receipt is auto-shown when order status reaches 'Filling Completed'. There is no automatic navigation or display trigger when the status first becomes Filling Completed.",
-      "reason": "MyOrders.tsx shows a 'View Receipt' button only when status is Filling Completed, but no auto-navigation occurs when status transitions to that stage.",
-      "evidence": [
-        "frontend/src/components/MyOrders.tsx",
-        "frontend/src/components/Receipt.tsx"
-      ]
-    },
-    {
-      "requirement": "REQ-6: Dashboard must poll or re-fetch to reflect new submissions in near real-time without a full page reload.",
-      "reason": "AdminDashboard.tsx uses useGetAllOrders but no polling interval such as refetchInterval is visible in the diff.",
-      "evidence": [
-        "frontend/src/components/AdminDashboard.tsx"
-      ]
-    },
-    {
-      "requirement": "REQ-3: OTP-based login should allow a customer to log in via OTP without needing a stored password. The current implementation attempts login with the literal password 'otp_login' which will not match any real registered customer password.",
-      "reason": "CustomerLogin.tsx OTP verification calls loginCustomer with password 'otp_login', which will fail for any customer who registered with a real password, breaking the OTP flow.",
-      "evidence": [
-        "frontend/src/components/CustomerLogin.tsx"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "LoginSelection intermediate screen allowing users to choose between Admin Login and Customer Login before proceeding.",
-      "reason": "The build request describes separate admin and customer login screens but does not specify an intermediate login type chooser screen.",
-      "evidence": [
-        "frontend/src/components/LoginSelection.tsx",
-        "frontend/src/App.tsx"
-      ]
-    },
-    {
-      "description": "UserProfile type and associated functions (getCallerUserProfile, getUserProfile, saveCallerUserProfile) tied to Internet Computer Principal-based access control in the Motoko backend.",
-      "reason": "The build request specifies customer accounts stored by mobile number. No UserProfile type, ICP Principal-based storage, or profile query functions were requested.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "description": "MixinAuthorization and AccessControl role-based permission system imported and used in the backend actor.",
-      "reason": "The build request does not specify any ICP canister-level role or permission framework. The requested backend is a simple Motoko actor with named update/query functions.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "description": "MixinStorage and ExternalBlob blob storage system used for document uploads, storing a documentKey URL instead of base64 in the backend.",
-      "reason": "REQ-5 and REQ-13 explicitly require documents to be stored as base64 (documentBase64) in the Motoko backend. The implementation substitutes an external blob/URL system.",
-      "evidence": [
-        "backend/main.mo",
-        "frontend/src/components/ServiceForm.tsx"
-      ]
-    },
-    {
-      "description": "Logout button present in the top navigation bar of the Layout component.",
-      "reason": "The build request does not mention a logout feature or button anywhere in the requirements.",
-      "evidence": [
-        "frontend/src/components/Layout.tsx"
-      ]
-    }
-  ],
-  "confidence": 0.72,
+  "generatedAt": "2026-03-02T02:15:06.409Z",
+  "summary": "The diff implements all three requirements. REQ-1 is addressed in AuthContext.tsx with localStorage-based session initialization and persistence. REQ-2 is addressed in Layout.tsx with adminLogout/customerLogout calls plus onLogout navigation callback, and in App.tsx with a useEffect that detects isAuthenticated becoming false and redirects to login-selection. REQ-3 is addressed in ServiceForm.tsx by reading customerSession.mobile as customerId and guarding against missing sessions. All acceptance criteria appear to be met. The backend migration.mo file is a minor addition removing nextDocumentId, which is consistent with the Motoko-only constraint. No missing requirements or hallucinated features were detected.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.91,
   "changed_files": [
-    "all_files_summary.json",
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
-    "frontend/index.html",
     "frontend/src/App.tsx",
-    "frontend/src/components/AdminDashboard.tsx",
-    "frontend/src/components/AdminLogin.tsx",
-    "frontend/src/components/AdminQRManagement.tsx",
-    "frontend/src/components/Contact.tsx",
     "frontend/src/components/CustomerLogin.tsx",
-    "frontend/src/components/Home.tsx",
     "frontend/src/components/Layout.tsx",
-    "frontend/src/components/LoginSelection.tsx",
-    "frontend/src/components/MyOrders.tsx",
-    "frontend/src/components/OrderTracking.tsx",
-    "frontend/src/components/PaymentScreen.tsx",
-    "frontend/src/components/Receipt.tsx",
-    "frontend/src/components/ServiceCatalog.tsx",
     "frontend/src/components/ServiceForm.tsx",
-    "frontend/src/components/SplashScreen.tsx",
-    "frontend/src/components/VijayAIChatbot.tsx",
     "frontend/src/contexts/AuthContext.tsx",
-    "frontend/src/data/chatbotResponses.ts",
-    "frontend/src/data/services.ts",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/lib/blobStorage.ts",
-    "frontend/src/main.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

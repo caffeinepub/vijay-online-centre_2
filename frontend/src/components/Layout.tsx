@@ -7,9 +7,10 @@ interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   onNavigate: (tab: string) => void;
+  onLogout: () => void;
 }
 
-export default function Layout({ children, activeTab, onNavigate }: LayoutProps) {
+export default function Layout({ children, activeTab, onNavigate, onLogout }: LayoutProps) {
   const { isAdmin, customerSession, adminLogout, customerLogout } = useAuth();
 
   const customerTabs = [
@@ -34,6 +35,8 @@ export default function Layout({ children, activeTab, onNavigate }: LayoutProps)
     } else {
       customerLogout();
     }
+    // Navigate to login screen after clearing session
+    onLogout();
   };
 
   return (
@@ -65,7 +68,7 @@ export default function Layout({ children, activeTab, onNavigate }: LayoutProps)
             )}
             {customerSession && !isAdmin && (
               <p className="text-xs leading-tight" style={{ color: 'oklch(0.62 0.015 240)', fontSize: '0.65rem' }}>
-                {customerSession.mobile}
+                {customerSession.name !== customerSession.mobile ? customerSession.name : customerSession.mobile}
               </p>
             )}
           </div>

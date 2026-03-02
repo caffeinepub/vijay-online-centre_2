@@ -1,6 +1,6 @@
 {
   "frontend/src/lib/blobStorage.ts": "Blob storage utility class that converts raw bytes or URLs into usable blob URLs, with the `ArrayBufferLike` to `ArrayBuffer` cast fixed by routing through `unknown` to satisfy TypeScript's strict overlap check.",
-  "frontend/src/App.tsx": "Main application component with state-machine-based screen navigation, wrapping all screens in `AuthProvider` and routing between splash, login, and main app views with a tab-based layout.",
+  "frontend/src/App.tsx": "Main app state machine that restores sessions from AuthContext on splash completion, uses a useEffect to detect logout (isAuthenticated becoming false) and redirect to login-selection, and passes an onLogout callback to Layout.",
   "frontend/src/components/OrderTracking.tsx": "Flipkart-style 4-stage order progress stepper showing Form Submitted → Payment Done → Processing → Completed, with animated progress line and stage indicators.",
   "frontend/src/components/AdminDashboard.tsx": "Admin-only dashboard listing all service orders with expandable cards, filter tabs by status, and Accept/Reject/Confirm Payment action buttons with real-time polling.",
   "frontend/src/components/PaymentScreen.tsx": "Payment screen showing either the admin-uploaded permanent QR image or a canvas-generated UPI QR code with payment instructions for customers.",
@@ -8,5 +8,8 @@
   "frontend/src/components/Receipt.tsx": "Professional invoice-style receipt component with Navy Blue header, order details, and a print button, shown when order status reaches \"Filling Completed\".",
   "frontend/src/components/Contact.tsx": "Contact page with prominent phone number display and action buttons for WhatsApp chat, direct call, and Google Maps navigation.",
   "frontend/src/components/VijayAIChatbot.tsx": "Floating chatbot button with slide-up chat panel implementing rule-based Hindi/English responses for services, payments, tracking, and contact queries.",
-  "frontend/src/components/Layout.tsx": "App shell with top bar (logo, user info, logout), scrollable content area, bottom navigation tabs (context-aware for admin vs customer), and embedded VijayAIChatbot."
+  "frontend/src/components/Layout.tsx": "App shell with top bar, bottom navigation, and a logout button that calls both the AuthContext logout function AND the onLogout navigation callback to properly redirect the user to the login screen.",
+  "frontend/src/contexts/AuthContext.tsx": "AuthContext with persistent localStorage-based session for both admin and customer, with robust session validation on restore, and separate customerLogout/adminLogout functions that clear both state and localStorage.",
+  "frontend/src/components/ServiceForm.tsx": "Service application form that guards against unauthenticated access (shows a login-required screen if no session), always uses the logged-in customer's mobile as customerId, and provides user-friendly error messages for authorization failures.",
+  "frontend/src/components/CustomerLogin.tsx": "Customer login/register screen with manual and OTP login modes; on successful login saves the customer session to AuthContext (which persists it to localStorage), and includes password length validation on registration."
 }

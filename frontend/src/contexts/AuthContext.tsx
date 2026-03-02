@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface CustomerSession {
   mobile: string;
@@ -39,7 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customerSession, setCustomerSessionState] = useState<CustomerSession | null>(() => {
     try {
       const stored = localStorage.getItem(CUSTOMER_SESSION_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate that the stored session has required fields
+        if (parsed && typeof parsed.mobile === 'string' && parsed.mobile.length > 0) {
+          return parsed;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
@@ -75,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const customerLogout = () => {
-    setCustomerSession(null);
+    setCustomerSessionState(null);
+    try {
+      localStorage.removeItem(CUSTOMER_SESSION_KEY);
+    } catch { /* ignore */ }
   };
 
   const isAuthenticated = isAdmin || customerSession !== null;

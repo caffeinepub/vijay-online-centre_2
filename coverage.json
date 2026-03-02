@@ -1,333 +1,75 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-01T13:04:59.011Z",
+  "generatedAt": "2026-03-02T02:15:06.412Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 13,
-    "implemented": 12,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Create a splash screen that displays the Vijay Online Centre logo (generated asset), app name 'Vijay Online Centre', and the Hindi welcome message 'स्वागत है आपका हमारे विजय ऑनलाइन प्लेटफ़ॉर्म पर'. The splash screen should display for ~2 seconds with a fade-in animation before transitioning to the login screen.",
+        "summary": "Implement persistent customer session in AuthContext so that once a customer logs in, their session is restored automatically on every page load (using localStorage) and they are NOT redirected to the login screen unless they explicitly log out.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/SplashScreen.tsx",
+          "frontend/src/contexts/AuthContext.tsx",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/SplashScreen.tsx",
+          "frontend/src/contexts/AuthContext.tsx",
           "frontend/src/App.tsx"
         ]
-      },
-      {
-        "id": "REQ-10",
-        "summary": "Add a 'Vijay AI' chatbot assistant accessible via a floating chat button on all screens. The chatbot must support both Hindi and English. Implement a rule-based chatbot with pre-defined responses covering: how to apply for services, payment help, order tracking help, contact information, and general guidance about the platform. Display it as a slide-up chat panel with a 'Vijay AI — 24x7 Assistant' header.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/VijayAIChatbot.tsx",
-          "frontend/src/data/chatbotResponses.ts",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/VijayAIChatbot.tsx",
-          "frontend/src/data/chatbotResponses.ts",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-11",
-        "summary": "Add a Contact section (accessible from bottom navigation or a dedicated screen) with three options: (1) WhatsApp Chat button that opens wa.me/918173064549, (2) Direct Call button that triggers tel:+918173064549, (3) Google Maps location button that opens maps.google.com with a search query for the business. Display the phone number +91 81730 64549 prominently.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/Contact.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/Contact.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-12",
-        "summary": "Apply a premium Navy Blue (#0A1628 / #0D2137) and Silver (#C0C0C0 / #E8E8E8) UI theme consistently across all screens. Use a bottom navigation bar with icons for: Home, Services, My Orders, Contact, and (admin-only) Dashboard. Include smooth page transition animations and card hover/press effects. Use professional fonts (system sans-serif or Google Fonts equivalent). Ensure the layout is mobile-first and optimized for small screens (360px width minimum) without any zoom or overflow issues.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/App.tsx",
-          "frontend/index.html",
-          "frontend/src/components/Home.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/App.tsx",
-          "frontend/index.html",
-          "frontend/src/components/Home.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-13",
-        "summary": "Design and implement the complete Motoko backend actor to store: customer accounts (mobile, password hash, name), service order submissions (orderId, customerId, serviceName, name, mobile, address, documentBase64, status, amount, timestamp), admin QR settings (permanentQrBase64, autoQrAmount), and payment confirmation records. Expose query and update functions for: submitOrder, getOrdersByCustomer, getAllOrders (admin), updateOrderStatus (admin), setPermQR (admin), getPermQR, confirmPayment (admin).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Implement a permanent Admin Login screen with hardcoded credentials: User ID 'vijay@123user', Password 'vijay@2026'. Admin session must never expire and must provide unlimited lifetime access. Store admin session in local state so the admin remains logged in across page reloads.",
+        "summary": "Fix the Logout button in the Layout component so that clicking it clears the customer or admin session from both AuthContext state and localStorage, then navigates the user back to the login/selection screen.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/AdminLogin.tsx",
-          "frontend/src/hooks/useAdminAuth.ts",
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/contexts/AuthContext.tsx",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/AdminLogin.tsx",
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/contexts/AuthContext.tsx",
           "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Implement a Customer Login screen with two options: (1) Manual login using mobile number + a PIN/password, and (2) OTP-based login using mobile number (simulated OTP flow since real SMS is not supported — display OTP in-app for demo). Customer accounts must never expire and support unlimited registered users stored in the Motoko backend.",
+        "summary": "Fix the 'Unauthorized: Only authenticated users can submit orders' error in ServiceForm and any other form submission flows. Ensure that after a customer logs in, the authenticated user's principal or customer ID is correctly attached to every backend call (submitOrder and any similar mutations in useQueries.ts), so forms like 'Niwas Praman Patra' submit successfully without an unauthorized error.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/CustomerLogin.tsx",
-          "frontend/src/components/CustomerRegistration.tsx",
-          "frontend/src/hooks/useCustomerAuth.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/LoginSelection.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/CustomerLogin.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/LoginSelection.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Build a searchable service catalog displaying all 32 services: (1) Aay Praman Patra, (2) Jati Praman Patra, (3) Niwas Praman Patra, (4) Janm Praman Patra, (5) Mrityu Praman Patra, (6) Naya Pan Card, (7) Pan Card Correction, (8) Aadhar Card Update, (9) Voter ID New, (10) Ration Card Online, (11) Ayushman Card, (12) Driving License, (13) Naya Passport, (14) PF Withdrawal/KYC, (15) E-Shram Card, (16) Pension KYC, (17) Bijli Bill Payment, (18) Gadi ka Bima, (19) Railway Ticket, (20) Flight Ticket, (21) PM Kisan Registration, (22) Vridha Pension, (23) Vidhwa Pension, (24) Divyang Pension, (25) Kanya Sumangala Yojana, (26) UP Scholarship, (27) Charitra Praman Patra, (28) Police Verification, (29) Bhulekh, (30) Shadi Registration, (31) Udyam Registration, (32) Gazette Notification. Include a real-time search/filter input at the top. Each service is displayed as a tappable card.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/data/services.ts",
-          "frontend/src/components/ServiceCatalog.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/data/services.ts",
-          "frontend/src/components/ServiceCatalog.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Create a service application form for each of the 32 services. The form must include: Name (text), Mobile Number (numeric), Address (textarea), Document Upload (accepts image or PDF file, stored as base64 in backend), and a Submit button. On submission, save the form entry to the Motoko backend with a timestamp, assigned service name, customer info, and initial status 'Form Submitted'.",
-        "status": "implemented",
-        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
           "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useServiceSubmission.ts"
+          "frontend/src/contexts/AuthContext.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/ServiceForm.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Build a real-time Admin Dashboard (accessible only when logged in as admin) that lists all submitted service forms. Each entry must show: Customer Name, Address, Selected Service, Uploaded document preview (image thumbnail or PDF icon), Date & Time of submission. Each entry must have two action buttons: Accept (green checkmark) and Reject (red cross). Accepting moves the order status to 'Payment Completed' or 'Processing'; Rejecting marks it 'Rejected'. The dashboard must refresh to show new submissions without a full page reload.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useAdminOrders.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AdminDashboard.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Implement a dual-mode payment system. (1) Permanent QR Mode: Admin can upload a QR image once from the admin panel; this same QR image is stored in the backend and always displayed to customers on the payment screen. The uploaded UPI QR from the user's provided image (IMG_20260228_093258.jpg — ICICI Bank PhonePe QR) should be used as the default pre-loaded QR. (2) Auto QR Generate Mode: Admin enters a specific amount; the frontend generates a UPI payment QR code dynamically using a QR library encoding a UPI deep-link string. After the customer scans and pays, the admin can manually confirm payment, which advances the order status to 'Payment Completed'.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AdminQRManagement.tsx",
-          "frontend/src/components/PaymentScreen.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/AdminDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AdminQRManagement.tsx",
-          "frontend/src/components/PaymentScreen.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/AdminDashboard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-8",
-        "summary": "Add Flipkart-style 4-stage order tracking for each submitted service application. Stages in order: (1) Form Submitted → (2) Payment Completed → (3) Processing (Admin Working) → (4) Filling Completed. Display a horizontal progress stepper with icons/circles and connecting lines. The current active stage is highlighted. Customers can view their order tracking from 'My Orders' or a tracking section.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/MyOrders.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/MyOrders.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Implement an auto-generated receipt that is shown (and printable/downloadable as HTML) when an order reaches 'Filling Completed' status. The receipt must include: Vijay Online Centre header, Service Name, Amount Paid, Date & Time, and Payment Status. Style the receipt like a professional invoice with the Navy Blue & Silver theme.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/Receipt.tsx",
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/MyOrders.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/Receipt.tsx",
-          "frontend/src/components/OrderTracking.tsx",
-          "frontend/src/components/MyOrders.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/contexts/AuthContext.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/authorization/MixinAuthorization.mo",
-    "backend/authorization/access-control.mo",
-    "backend/blob-storage/Mixin.mo",
-    "backend/blob-storage/Storage.mo",
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "build-template/Dockerfile",
-    "build-template/LICENSE",
     "build-template/README.md",
-    "build-template/deploy.sh",
-    "build-template/icp.yaml",
-    "build-template/package.json",
-    "build-template/pnpm-lock.yaml",
-    "build-template/pnpm-workspace.yaml",
-    "build-template/scripts/prune-unused-images.js",
-    "build-template/scripts/resize-images.js",
-    "build-template/src/backend/canister.yaml",
-    "build-template/src/backend/system-idl/aaaaa-aa.did",
-    "build-template/src/frontend/canister.yaml",
-    "build-template/src/frontend/components.json",
-    "build-template/src/frontend/env.json",
-    "build-template/src/frontend/eslint-rules/no-bigint-in-query-keys.js",
-    "build-template/src/frontend/eslint-rules/require-internet-identity-provider.js",
-    "build-template/src/frontend/eslint.config.js",
-    "build-template/src/frontend/package.json",
-    "build-template/src/frontend/postcss.config.js",
-    "build-template/src/frontend/src/components/ui/accordion.tsx",
-    "build-template/src/frontend/src/components/ui/alert-dialog.tsx",
-    "build-template/src/frontend/src/components/ui/alert.tsx",
-    "build-template/src/frontend/src/components/ui/aspect-ratio.tsx",
-    "build-template/src/frontend/src/components/ui/avatar.tsx",
-    "build-template/src/frontend/src/components/ui/badge.tsx",
-    "build-template/src/frontend/src/components/ui/breadcrumb.tsx",
-    "build-template/src/frontend/src/components/ui/button.tsx",
-    "build-template/src/frontend/src/components/ui/calendar.tsx",
-    "build-template/src/frontend/src/components/ui/card.tsx",
-    "build-template/src/frontend/src/components/ui/carousel.tsx",
-    "build-template/src/frontend/src/components/ui/chart.tsx",
-    "build-template/src/frontend/src/components/ui/checkbox.tsx",
-    "build-template/src/frontend/src/components/ui/collapsible.tsx",
-    "build-template/src/frontend/src/components/ui/command.tsx",
-    "build-template/src/frontend/src/components/ui/context-menu.tsx",
-    "build-template/src/frontend/src/components/ui/dialog.tsx",
-    "build-template/src/frontend/src/components/ui/drawer.tsx",
-    "build-template/src/frontend/src/components/ui/dropdown-menu.tsx",
-    "build-template/src/frontend/src/components/ui/form.tsx",
-    "build-template/src/frontend/src/components/ui/hover-card.tsx",
-    "build-template/src/frontend/src/components/ui/input-otp.tsx",
-    "build-template/src/frontend/src/components/ui/input.tsx",
-    "build-template/src/frontend/src/components/ui/label.tsx",
-    "build-template/src/frontend/src/components/ui/menubar.tsx",
-    "build-template/src/frontend/src/components/ui/navigation-menu.tsx",
-    "build-template/src/frontend/src/components/ui/pagination.tsx",
-    "build-template/src/frontend/src/components/ui/popover.tsx",
-    "build-template/src/frontend/src/components/ui/progress.tsx",
-    "build-template/src/frontend/src/components/ui/radio-group.tsx",
-    "build-template/src/frontend/src/components/ui/resizable.tsx",
-    "build-template/src/frontend/src/components/ui/scroll-area.tsx",
-    "build-template/src/frontend/src/components/ui/select.tsx",
-    "build-template/src/frontend/src/components/ui/separator.tsx",
-    "build-template/src/frontend/src/components/ui/sheet.tsx",
-    "build-template/src/frontend/src/components/ui/sidebar.tsx",
-    "build-template/src/frontend/src/components/ui/skeleton.tsx",
-    "build-template/src/frontend/src/components/ui/slider.tsx",
-    "build-template/src/frontend/src/components/ui/sonner.tsx",
-    "build-template/src/frontend/src/components/ui/switch.tsx",
-    "build-template/src/frontend/src/components/ui/table.tsx",
-    "build-template/src/frontend/src/components/ui/tabs.tsx",
-    "build-template/src/frontend/src/components/ui/textarea.tsx",
-    "build-template/src/frontend/src/components/ui/toggle-group.tsx",
-    "build-template/src/frontend/src/components/ui/toggle.tsx",
-    "build-template/src/frontend/src/components/ui/tooltip.tsx",
-    "build-template/src/frontend/src/hooks/use-mobile.tsx",
-    "build-template/src/frontend/src/lib/utils.ts",
-    "build-template/src/frontend/tsconfig.json",
-    "build-template/src/frontend/vite.config.js",
-    "build-template/tsconfig.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/public/assets/generated/service-icons.dim_256x256.png",
-    "frontend/public/assets/generated/splash-bg.dim_1080x1920.png",
-    "frontend/public/assets/generated/vijay-logo.dim_512x512.png",
     "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/AdminDashboard.tsx",
-    "frontend/src/components/AdminLogin.tsx",
-    "frontend/src/components/AdminQRManagement.tsx",
-    "frontend/src/components/Contact.tsx",
     "frontend/src/components/CustomerLogin.tsx",
-    "frontend/src/components/Home.tsx",
     "frontend/src/components/Layout.tsx",
-    "frontend/src/components/LoginSelection.tsx",
-    "frontend/src/components/MyOrders.tsx",
-    "frontend/src/components/OrderTracking.tsx",
-    "frontend/src/components/PaymentScreen.tsx",
-    "frontend/src/components/Receipt.tsx",
-    "frontend/src/components/ServiceCatalog.tsx",
     "frontend/src/components/ServiceForm.tsx",
-    "frontend/src/components/SplashScreen.tsx",
-    "frontend/src/components/VijayAIChatbot.tsx",
-    "frontend/src/config.ts",
     "frontend/src/contexts/AuthContext.tsx",
-    "frontend/src/data/chatbotResponses.ts",
-    "frontend/src/data/services.ts",
     "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/lib/blobStorage.ts",
-    "frontend/src/main.tsx",
-    "frontend/src/ui-summary.json",
-    "frontend/src/utils/StorageClient.ts",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

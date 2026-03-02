@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User, ArrowLeft, Phone } from 'lucide-react';
+import { Eye, EyeOff, User, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoginCustomer, useRegisterCustomer } from '../hooks/useQueries';
 
@@ -43,6 +43,7 @@ export default function CustomerLogin({ onSuccess, onBack }: CustomerLoginProps)
     try {
       const result = await loginMutation.mutateAsync({ mobile, password });
       if (result) {
+        // Save session with mobile as both id and name (name will be updated if available)
         setCustomerSession({ mobile, name: mobile });
         onSuccess();
       } else {
@@ -60,11 +61,16 @@ export default function CustomerLogin({ onSuccess, onBack }: CustomerLoginProps)
       setError('Mobile number must be exactly 10 digits.');
       return;
     }
+    if (regPassword.length < 4) {
+      setError('Password must be at least 4 characters.');
+      return;
+    }
     try {
       await registerMutation.mutateAsync({ name: regName, mobile: regMobile, password: regPassword });
       setSuccess('Registration successful! Please login.');
       setMode('login');
       setMobile(regMobile);
+      setPassword('');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed.');
     }
@@ -86,7 +92,6 @@ export default function CustomerLogin({ onSuccess, onBack }: CustomerLoginProps)
       setError('Invalid OTP. Please try again.');
       return;
     }
-    // For OTP login, we use a default password or check if user exists
     try {
       const result = await loginMutation.mutateAsync({ mobile: otpMobile, password: 'otp_login' });
       if (result) {
@@ -96,7 +101,6 @@ export default function CustomerLogin({ onSuccess, onBack }: CustomerLoginProps)
         setError('Account not found. Please register first or use manual login.');
       }
     } catch {
-      // If login fails, still allow OTP-verified users to proceed (they may need to register)
       setError('Account not found. Please register first.');
     }
   };
@@ -326,7 +330,7 @@ export default function CustomerLogin({ onSuccess, onBack }: CustomerLoginProps)
                 type="password"
                 value={regPassword}
                 onChange={e => setRegPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder="Create a password (min 4 characters)"
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                 style={{ background: 'oklch(0.22 0.06 240)', border: '1px solid oklch(0.35 0.08 240)', color: 'oklch(0.97 0.005 240)' }}
                 required

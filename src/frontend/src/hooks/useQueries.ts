@@ -116,7 +116,7 @@ export function useGetAllOrders() {
     queryKey: ["allOrders"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllOrders();
+      return actor.getAllOrdersPublic();
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 5000,
@@ -127,6 +127,69 @@ export function useGetAllOrders() {
   });
 }
 
+// ── Public (no-auth) variants ─────────────────────────────────────────────────
+
+export function useGetAllOrdersPublic() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder[]>({
+    queryKey: ["allOrders"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllOrdersPublic();
+    },
+    enabled: !!actor && !isFetching,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function useGetOrdersByCustomerPublic(customerId: string) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder[]>({
+    queryKey: ["customerOrders", customerId],
+    queryFn: async () => {
+      if (!actor || !customerId) return [];
+      return actor.getOrdersByCustomerPublic(customerId);
+    },
+    enabled: !!actor && !isFetching && !!customerId,
+    retry: false,
+    staleTime: 0,
+  });
+}
+
+export function useGetOrderByIdPublic(orderId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ServiceOrder | null>({
+    queryKey: ["order", orderId?.toString()],
+    queryFn: async () => {
+      if (!actor || orderId === null) return null;
+      return actor.getOrderByIdPublic(orderId);
+    },
+    enabled: !!actor && !isFetching && orderId !== null,
+    retry: false,
+  });
+}
+
+export function useGetQRSettingsPublic() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminQRSettings | null>({
+    queryKey: ["qrSettings"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getQRSettingsPublic();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 0,
+  });
+}
+
 export function useGetOrdersByCustomer(customerId: string) {
   const { actor, isFetching } = useActor();
 
@@ -134,9 +197,11 @@ export function useGetOrdersByCustomer(customerId: string) {
     queryKey: ["customerOrders", customerId],
     queryFn: async () => {
       if (!actor || !customerId) return [];
-      return actor.getOrdersByCustomer(customerId);
+      return actor.getOrdersByCustomerPublic(customerId);
     },
     enabled: !!actor && !isFetching && !!customerId,
+    retry: false,
+    staleTime: 0,
   });
 }
 
@@ -147,9 +212,10 @@ export function useGetOrderById(orderId: bigint | null) {
     queryKey: ["order", orderId?.toString()],
     queryFn: async () => {
       if (!actor || orderId === null) return null;
-      return actor.getOrderById(orderId);
+      return actor.getOrderByIdPublic(orderId);
     },
     enabled: !!actor && !isFetching && orderId !== null,
+    retry: false,
   });
 }
 
@@ -341,5 +407,57 @@ export function useGetLastOrderTimestamp() {
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 5000,
+  });
+}
+
+// ── Mark Order Paid ───────────────────────────────────────────────────────────
+
+export function useMarkOrderPaid() {
+  const { actor } = useActor();
+  const actorRef = useRef(actor);
+  useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderId: bigint) => {
+      const a = actorRef.current;
+      if (!a) throw new Error("Actor not available");
+      return a.markOrderPaid(orderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["customerOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["orderByTracking"] });
+      queryClient.invalidateQueries({ queryKey: ["order"] });
+    },
+  });
+}
+
+// ── Upload Order Receipt ──────────────────────────────────────────────────────
+
+export function useUploadOrderReceipt() {
+  const { actor } = useActor();
+  const actorRef = useRef(actor);
+  useEffect(() => {
+    actorRef.current = actor;
+  }, [actor]);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      receiptUrl,
+    }: { orderId: bigint; receiptUrl: string }) => {
+      const a = actorRef.current;
+      if (!a) throw new Error("Actor not available");
+      return a.uploadOrderReceipt(orderId, receiptUrl);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["order"] });
+      queryClient.invalidateQueries({ queryKey: ["customerOrders"] });
+    },
   });
 }

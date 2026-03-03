@@ -22,6 +22,8 @@ export interface OrderStatus {
 }
 export interface ServiceOrder {
   'serviceName' : string,
+  'paymentStatus' : string,
+  'receiptUrl' : string,
   'name' : string,
   'trackingId' : string,
   'documentDataBase64' : string,
@@ -69,18 +71,20 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'adminLogin' : ActorMethod<[string, string], boolean>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'getAllOrders' : ActorMethod<[], Array<ServiceOrder>>,
+  'getAllOrdersPublic' : ActorMethod<[], Array<ServiceOrder>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getLastOrderTimestamp' : ActorMethod<[], bigint>,
-  'getOrderById' : ActorMethod<[bigint], [] | [ServiceOrder]>,
+  'getOrderByIdPublic' : ActorMethod<[bigint], [] | [ServiceOrder]>,
   'getOrderByTrackingId' : ActorMethod<[string], [] | [ServiceOrder]>,
-  'getOrdersByCustomer' : ActorMethod<[string], Array<ServiceOrder>>,
+  'getOrdersByCustomerPublic' : ActorMethod<[string], Array<ServiceOrder>>,
   'getPermQR' : ActorMethod<[], string>,
   'getQRSettings' : ActorMethod<[], [] | [AdminQRSettings]>,
+  'getQRSettingsPublic' : ActorMethod<[], [] | [AdminQRSettings]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'loginCustomer' : ActorMethod<[string, string], boolean>,
+  'markOrderPaid' : ActorMethod<[bigint], undefined>,
   'registerCustomer' : ActorMethod<[string, string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setAutoQRAmount' : ActorMethod<[bigint], undefined>,
@@ -91,6 +95,7 @@ export interface _SERVICE {
   >,
   'updateOrderAmount' : ActorMethod<[bigint, bigint], undefined>,
   'updateOrderStatus' : ActorMethod<[bigint, string], undefined>,
+  'uploadOrderReceipt' : ActorMethod<[bigint, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

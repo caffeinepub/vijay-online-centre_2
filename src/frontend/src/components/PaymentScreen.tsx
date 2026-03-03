@@ -3,11 +3,12 @@ import {
   ArrowLeft,
   CheckCircle,
   Copy,
+  CreditCard,
   Loader2,
   QrCode,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { useGetQRSettings } from "../hooks/useQueries";
+import { useGetQRSettingsPublic, useMarkOrderPaid } from "../hooks/useQueries";
 
 interface PaymentScreenProps {
   orderId?: string;
@@ -26,7 +27,10 @@ export default function PaymentScreen({
   customerName,
   onPaymentDone,
 }: PaymentScreenProps) {
-  const { data: qrSettings, isLoading: qrLoading } = useGetQRSettings();
+  const { data: qrSettings, isLoading: qrLoading } = useGetQRSettingsPublic();
+  const markPaidMutation = useMarkOrderPaid();
+  const [markPaidSuccess, setMarkPaidSuccess] = useState(false);
+  const [markPaidError, setMarkPaidError] = useState("");
   const permQRBase64 = qrSettings?.permanentQrKey ?? "";
   const adminSetPrice = qrSettings
     ? qrSettings.autoQrAmount > 0n || qrSettings.permanentQrKey !== ""
@@ -221,6 +225,18 @@ export default function PaymentScreen({
   };
 
   const qrImageSrc = getQRImageSrc();
+
+  const handleMarkAsPaid = async () => {
+    if (!orderId) return;
+    setMarkPaidError("");
+    try {
+      await markPaidMutation.mutateAsync(BigInt(orderId));
+      setMarkPaidSuccess(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to mark as paid";
+      setMarkPaidError(msg);
+    }
+  };
 
   return (
     <div
@@ -481,6 +497,55 @@ export default function PaymentScreen({
           </ol>
         </div>
 
+        {/* Mark as Paid button */}
+        {orderId && !markPaidSuccess && (
+          <button
+            type="button"
+            onClick={handleMarkAsPaid}
+            disabled={markPaidMutation.isPending}
+            className="w-full py-4 rounded-2xl font-semibold text-base transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{
+              background: "oklch(0.55 0.18 145)",
+              color: "oklch(0.97 0.005 240)",
+            }}
+            data-ocid="payment.mark_paid.button"
+          >
+            {markPaidMutation.isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <CreditCard className="w-5 h-5" />
+            )}
+            {markPaidMutation.isPending ? "Processing..." : "Mark as Paid"}
+          </button>
+        )}
+
+        {markPaidSuccess && (
+          <div
+            className="w-full py-4 rounded-2xl font-semibold text-base text-center"
+            style={{
+              background: "oklch(0.5 0.15 145 / 20%)",
+              border: "1px solid oklch(0.5 0.15 145 / 40%)",
+              color: "oklch(0.65 0.18 145)",
+            }}
+            data-ocid="payment.success_state"
+          >
+            ✓ Payment Successful! Your order is now In Process
+          </div>
+        )}
+
+        {markPaidError && (
+          <div
+            className="px-4 py-3 rounded-xl text-sm text-center"
+            style={{
+              background: "oklch(0.577 0.245 27.325 / 20%)",
+              color: "oklch(0.85 0.15 27)",
+            }}
+            data-ocid="payment.error_state"
+          >
+            {markPaidError}
+          </div>
+        )}
+
         {/* Done button */}
         {onPaymentDone && (
           <button
@@ -491,6 +556,7 @@ export default function PaymentScreen({
               background: "oklch(0.78 0.12 85)",
               color: "oklch(0.14 0.04 240)",
             }}
+            data-ocid="payment.done.button"
           >
             Payment Done — Track My Order
           </button>

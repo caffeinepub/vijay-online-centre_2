@@ -2,6 +2,7 @@ import {
   CheckCircle,
   Clock,
   Copy,
+  CreditCard,
   IndianRupee,
   Loader2,
   Package,
@@ -9,12 +10,13 @@ import {
 } from "lucide-react";
 import React from "react";
 import type { ServiceOrder } from "../backend";
-import { useGetOrdersByCustomer } from "../hooks/useQueries";
+import { useGetOrdersByCustomerPublic } from "../hooks/useQueries";
 
 interface MyOrdersProps {
   customerId: string;
   onTrackOrder?: (trackingId: string) => void;
   onViewReceipt?: (orderId: string) => void;
+  onPayNow?: (orderId: string, serviceName: string) => void;
 }
 
 function getStatusStyle(status: string): { bg: string; color: string } {
@@ -38,6 +40,22 @@ function getStatusStyle(status: string): { bg: string; color: string } {
   }
 }
 
+function getPaymentStatusStyle(paymentStatus: string): {
+  bg: string;
+  color: string;
+} {
+  if (paymentStatus === "Paid") {
+    return {
+      bg: "oklch(0.5 0.15 145 / 15%)",
+      color: "oklch(0.5 0.15 145)",
+    };
+  }
+  return {
+    bg: "oklch(0.78 0.12 85 / 15%)",
+    color: "oklch(0.72 0.12 60)",
+  };
+}
+
 function getStatusIcon(status: string) {
   switch (status) {
     case "Order Placed":
@@ -57,13 +75,18 @@ function OrderCard({
   order,
   onTrackOrder,
   onViewReceipt,
+  onPayNow,
+  index,
 }: {
   order: ServiceOrder;
   onTrackOrder?: (trackingId: string) => void;
   onViewReceipt?: (orderId: string) => void;
+  onPayNow?: (orderId: string, serviceName: string) => void;
+  index: number;
 }) {
   const [copied, setCopied] = React.useState(false);
   const statusStyle = getStatusStyle(order.currentStatus);
+  const paymentStyle = getPaymentStatusStyle(order.paymentStatus || "Pending");
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,6 +105,8 @@ function OrderCard({
     });
   };
 
+  const hasReceipt = order.receiptUrl && order.receiptUrl !== "";
+
   return (
     <div
       className="rounded-2xl overflow-hidden"
@@ -89,6 +114,7 @@ function OrderCard({
         background: "oklch(0.18 0.05 240)",
         border: "1px solid oklch(0.28 0.07 240)",
       }}
+      data-ocid={`orders.item.${index}`}
     >
       <div className="p-4">
         {/* Service & Status */}
@@ -109,13 +135,23 @@ function OrderCard({
                 ` • ${formatDate(order.timestamp)}`}
             </p>
           </div>
-          <span
-            className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"
-            style={{ background: statusStyle.bg, color: statusStyle.color }}
-          >
-            {getStatusIcon(order.currentStatus)}
-            {order.currentStatus}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+              style={{ background: statusStyle.bg, color: statusStyle.color }}
+            >
+              {getStatusIcon(order.currentStatus)}
+              {order.currentStatus}
+            </span>
+            {/* Payment Status Badge */}
+            <span
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{ background: paymentStyle.bg, color: paymentStyle.color }}
+            >
+              <CreditCard size={10} />
+              {order.paymentStatus || "Pending"}
+            </span>
+          </div>
         </div>
 
         {/* Tracking ID */}
@@ -143,6 +179,7 @@ function OrderCard({
             className="p-1.5 rounded-lg transition-colors"
             style={{ background: "oklch(0.78 0.12 85 / 15%)" }}
             title="Copy tracking ID"
+            data-ocid={`orders.copy.button.${index}`}
           >
             {copied ? (
               <CheckCircle
@@ -182,7 +219,7 @@ function OrderCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {onTrackOrder && (
             <button
               type="button"
@@ -192,12 +229,32 @@ function OrderCard({
                 background: "oklch(0.78 0.12 85)",
                 color: "oklch(0.14 0.04 240)",
               }}
+              data-ocid={`orders.track.button.${index}`}
             >
               <Package size={12} />
               Track Order
             </button>
           )}
-          {onViewReceipt && (
+          {/* Pay Now button: only show if payment is still pending */}
+          {onPayNow && order.paymentStatus !== "Paid" && (
+            <button
+              type="button"
+              onClick={() =>
+                onPayNow(order.orderId.toString(), order.serviceName)
+              }
+              className="flex-1 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 flex items-center justify-center gap-1"
+              style={{
+                background: "oklch(0.55 0.18 145)",
+                color: "oklch(0.97 0.005 240)",
+              }}
+              data-ocid={`orders.pay.button.${index}`}
+            >
+              <CreditCard size={12} />
+              Pay Now
+            </button>
+          )}
+          {/* View Receipt: only show if receiptUrl exists */}
+          {onViewReceipt && hasReceipt && (
             <button
               type="button"
               onClick={() => onViewReceipt(order.orderId.toString())}
@@ -206,6 +263,7 @@ function OrderCard({
                 background: "oklch(0.22 0.06 240)",
                 color: "oklch(0.82 0.012 240)",
               }}
+              data-ocid={`orders.receipt.button.${index}`}
             >
               View Receipt
             </button>
@@ -220,12 +278,13 @@ export default function MyOrders({
   customerId,
   onTrackOrder,
   onViewReceipt,
+  onPayNow,
 }: MyOrdersProps) {
   const {
     data: orders = [],
     isLoading,
     error,
-  } = useGetOrdersByCustomer(customerId);
+  } = useGetOrdersByCustomerPublic(customerId);
 
   const sortedOrders = [...orders].sort(
     (a, b) => Number(b.orderId) - Number(a.orderId),
@@ -254,7 +313,10 @@ export default function MyOrders({
 
       <div className="px-4 py-4 pb-24 space-y-3">
         {isLoading && (
-          <div className="flex items-center justify-center py-12 gap-3">
+          <div
+            className="flex items-center justify-center py-12 gap-3"
+            data-ocid="orders.loading_state"
+          >
             <Loader2
               className="w-8 h-8 animate-spin"
               style={{ color: "oklch(0.78 0.12 85)" }}
@@ -273,13 +335,17 @@ export default function MyOrders({
               border: "1px solid oklch(0.577 0.245 27.325 / 40%)",
               color: "oklch(0.85 0.15 27)",
             }}
+            data-ocid="orders.error_state"
           >
             Failed to load orders. Please try again.
           </div>
         )}
 
         {!isLoading && !error && sortedOrders.length === 0 && (
-          <div className="flex flex-col items-center py-16 gap-3">
+          <div
+            className="flex flex-col items-center py-16 gap-3"
+            data-ocid="orders.empty_state"
+          >
             <Package size={48} style={{ color: "oklch(0.35 0.08 240)" }} />
             <p
               className="font-medium"
@@ -296,12 +362,14 @@ export default function MyOrders({
           </div>
         )}
 
-        {sortedOrders.map((order: ServiceOrder) => (
+        {sortedOrders.map((order: ServiceOrder, idx) => (
           <OrderCard
             key={order.orderId.toString()}
             order={order}
             onTrackOrder={onTrackOrder}
             onViewReceipt={onViewReceipt}
+            onPayNow={onPayNow}
+            index={idx + 1}
           />
         ))}
       </div>

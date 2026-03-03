@@ -11,7 +11,7 @@ import {
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import {
-  useGetQRSettings,
+  useGetQRSettingsPublic,
   useSetAutoQRAmount,
   useSetPermQR,
 } from "../hooks/useQueries";
@@ -21,7 +21,8 @@ interface AdminQRManagementProps {
 }
 
 export default function AdminQRManagement({ onBack }: AdminQRManagementProps) {
-  const { data: qrSettings, isLoading: settingsLoading } = useGetQRSettings();
+  const { data: qrSettings, isLoading: settingsLoading } =
+    useGetQRSettingsPublic();
   const setPermQRMutation = useSetPermQR();
   const setAutoAmountMutation = useSetAutoQRAmount();
 

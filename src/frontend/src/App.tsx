@@ -236,6 +236,13 @@ function AppContent() {
               customerId={customerSession?.mobile || ""}
               onTrackOrder={handleViewOrder}
               onViewReceipt={handleViewReceipt}
+              onPayNow={(oid, svcName) =>
+                setScreen({
+                  type: "payment",
+                  orderId: oid,
+                  serviceName: svcName,
+                })
+              }
             />
           );
 

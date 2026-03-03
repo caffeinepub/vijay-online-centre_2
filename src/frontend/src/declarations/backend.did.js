@@ -32,6 +32,8 @@ export const OrderStatus = IDL.Record({
 });
 export const ServiceOrder = IDL.Record({
   'serviceName' : IDL.Text,
+  'paymentStatus' : IDL.Text,
+  'receiptUrl' : IDL.Text,
   'name' : IDL.Text,
   'trackingId' : IDL.Text,
   'documentDataBase64' : IDL.Text,
@@ -84,30 +86,36 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'adminLogin' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
+  'getAllOrdersPublic' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getLastOrderTimestamp' : IDL.Func([], [IDL.Nat64], ['query']),
-  'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
+  'getOrderByIdPublic' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Opt(ServiceOrder)],
+      ['query'],
+    ),
   'getOrderByTrackingId' : IDL.Func(
       [IDL.Text],
       [IDL.Opt(ServiceOrder)],
       ['query'],
     ),
-  'getOrdersByCustomer' : IDL.Func(
+  'getOrdersByCustomerPublic' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(ServiceOrder)],
       ['query'],
     ),
   'getPermQR' : IDL.Func([], [IDL.Text], ['query']),
   'getQRSettings' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
+  'getQRSettingsPublic' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+  'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], ['query']),
+  'markOrderPaid' : IDL.Func([IDL.Nat], [], []),
   'registerCustomer' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setAutoQRAmount' : IDL.Func([IDL.Nat], [], []),
@@ -128,6 +136,7 @@ export const idlService = IDL.Service({
     ),
   'updateOrderAmount' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
   'updateOrderStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+  'uploadOrderReceipt' : IDL.Func([IDL.Nat, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -157,6 +166,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const ServiceOrder = IDL.Record({
     'serviceName' : IDL.Text,
+    'paymentStatus' : IDL.Text,
+    'receiptUrl' : IDL.Text,
     'name' : IDL.Text,
     'trackingId' : IDL.Text,
     'documentDataBase64' : IDL.Text,
@@ -206,30 +217,36 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'adminLogin' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'getAllOrders' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
+    'getAllOrdersPublic' : IDL.Func([], [IDL.Vec(ServiceOrder)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getLastOrderTimestamp' : IDL.Func([], [IDL.Nat64], ['query']),
-    'getOrderById' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceOrder)], ['query']),
+    'getOrderByIdPublic' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Opt(ServiceOrder)],
+        ['query'],
+      ),
     'getOrderByTrackingId' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(ServiceOrder)],
         ['query'],
       ),
-    'getOrdersByCustomer' : IDL.Func(
+    'getOrdersByCustomerPublic' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(ServiceOrder)],
         ['query'],
       ),
     'getPermQR' : IDL.Func([], [IDL.Text], ['query']),
     'getQRSettings' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
+    'getQRSettingsPublic' : IDL.Func([], [IDL.Opt(AdminQRSettings)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
+    'loginCustomer' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], ['query']),
+    'markOrderPaid' : IDL.Func([IDL.Nat], [], []),
     'registerCustomer' : IDL.Func([IDL.Text, IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setAutoQRAmount' : IDL.Func([IDL.Nat], [], []),
@@ -250,6 +267,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'updateOrderAmount' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
     'updateOrderStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+    'uploadOrderReceipt' : IDL.Func([IDL.Nat, IDL.Text], [], []),
   });
 };
 

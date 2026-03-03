@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Clock,
+  Download,
   IndianRupee,
   Loader2,
   MapPin,
@@ -15,7 +16,7 @@ import {
   User,
 } from "lucide-react";
 import React from "react";
-import { useGetOrderById } from "../hooks/useQueries";
+import { useGetOrderByIdPublic } from "../hooks/useQueries";
 
 interface ReceiptProps {
   orderId: string;
@@ -59,7 +60,11 @@ function formatTimestamp(ts: bigint | undefined): string {
 
 export default function Receipt({ orderId, onBack }: ReceiptProps) {
   const orderIdBigInt = orderId ? BigInt(orderId) : null;
-  const { data: order, isLoading, error } = useGetOrderById(orderIdBigInt);
+  const {
+    data: order,
+    isLoading,
+    error,
+  } = useGetOrderByIdPublic(orderIdBigInt);
 
   if (isLoading) {
     return (
@@ -239,8 +244,43 @@ export default function Receipt({ orderId, onBack }: ReceiptProps) {
           </CardContent>
         </Card>
 
+        {/* Receipt Download */}
+        {order.receiptUrl && order.receiptUrl !== "" ? (
+          <Card>
+            <CardContent className="p-4">
+              <a
+                href={order.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-colors"
+                style={{ background: "oklch(0.55 0.18 145)", color: "white" }}
+                data-ocid="receipt.download.button"
+              >
+                <Download className="w-4 h-4" />
+                Download Receipt / रसीद डाउनलोड करें
+              </a>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Receipt not yet available
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                रसीद अभी उपलब्ध नहीं है — Admin द्वारा तैयार होने पर यहाँ दिखेगी
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {onBack && (
-          <Button variant="outline" onClick={onBack} className="w-full">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="w-full"
+            data-ocid="receipt.cancel_button"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>

@@ -15,6 +15,8 @@ export interface OrderStatus {
 }
 export interface ServiceOrder {
     serviceName: string;
+    paymentStatus: string;
+    receiptUrl: string;
     name: string;
     trackingId: string;
     documentDataBase64: string;
@@ -44,18 +46,20 @@ export enum UserRole {
 export interface backendInterface {
     adminLogin(userId: string, password: string): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getAllOrders(): Promise<Array<ServiceOrder>>;
+    getAllOrdersPublic(): Promise<Array<ServiceOrder>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getLastOrderTimestamp(): Promise<bigint>;
-    getOrderById(orderId: bigint): Promise<ServiceOrder | null>;
+    getOrderByIdPublic(orderId: bigint): Promise<ServiceOrder | null>;
     getOrderByTrackingId(trackingId: string): Promise<ServiceOrder | null>;
-    getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
+    getOrdersByCustomerPublic(customerId: string): Promise<Array<ServiceOrder>>;
     getPermQR(): Promise<string>;
     getQRSettings(): Promise<AdminQRSettings | null>;
+    getQRSettingsPublic(): Promise<AdminQRSettings | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     loginCustomer(mobile: string, password: string): Promise<boolean>;
+    markOrderPaid(orderId: bigint): Promise<void>;
     registerCustomer(name: string, mobile: string, password: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setAutoQRAmount(autoAmount: bigint): Promise<void>;
@@ -63,4 +67,5 @@ export interface backendInterface {
     submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, timestamp: bigint): Promise<bigint>;
     updateOrderAmount(orderId: bigint, amount: bigint): Promise<void>;
     updateOrderStatus(orderId: bigint, newStatus: string): Promise<void>;
+    uploadOrderReceipt(orderId: bigint, receiptUrl: string): Promise<void>;
 }

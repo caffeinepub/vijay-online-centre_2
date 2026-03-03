@@ -97,6 +97,8 @@ export interface OrderStatus {
 }
 export interface ServiceOrder {
     serviceName: string;
+    paymentStatus: string;
+    receiptUrl: string;
     name: string;
     trackingId: string;
     documentDataBase64: string;
@@ -144,18 +146,20 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     adminLogin(userId: string, password: string): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getAllOrders(): Promise<Array<ServiceOrder>>;
+    getAllOrdersPublic(): Promise<Array<ServiceOrder>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getLastOrderTimestamp(): Promise<bigint>;
-    getOrderById(orderId: bigint): Promise<ServiceOrder | null>;
+    getOrderByIdPublic(orderId: bigint): Promise<ServiceOrder | null>;
     getOrderByTrackingId(trackingId: string): Promise<ServiceOrder | null>;
-    getOrdersByCustomer(customerId: string): Promise<Array<ServiceOrder>>;
+    getOrdersByCustomerPublic(customerId: string): Promise<Array<ServiceOrder>>;
     getPermQR(): Promise<string>;
     getQRSettings(): Promise<AdminQRSettings | null>;
+    getQRSettingsPublic(): Promise<AdminQRSettings | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     loginCustomer(mobile: string, password: string): Promise<boolean>;
+    markOrderPaid(orderId: bigint): Promise<void>;
     registerCustomer(name: string, mobile: string, password: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setAutoQRAmount(autoAmount: bigint): Promise<void>;
@@ -163,6 +167,7 @@ export interface backendInterface {
     submitOrder(customerId: string, serviceName: string, name: string, mobile: string, address: string, photoDataBase64: string, documentDataBase64: string, timestamp: bigint): Promise<bigint>;
     updateOrderAmount(orderId: bigint, amount: bigint): Promise<void>;
     updateOrderStatus(orderId: bigint, newStatus: string): Promise<void>;
+    uploadOrderReceipt(orderId: bigint, receiptUrl: string): Promise<void>;
 }
 import type { AdminQRSettings as _AdminQRSettings, OrderStatus as _OrderStatus, ServiceOrder as _ServiceOrder, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -293,17 +298,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getAllOrders(): Promise<Array<ServiceOrder>> {
+    async getAllOrdersPublic(): Promise<Array<ServiceOrder>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllOrders();
+                const result = await this.actor.getAllOrdersPublic();
                 return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllOrders();
+            const result = await this.actor.getAllOrdersPublic();
             return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -349,17 +354,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getOrderById(arg0: bigint): Promise<ServiceOrder | null> {
+    async getOrderByIdPublic(arg0: bigint): Promise<ServiceOrder | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getOrderById(arg0);
+                const result = await this.actor.getOrderByIdPublic(arg0);
                 return from_candid_opt_n19(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getOrderById(arg0);
+            const result = await this.actor.getOrderByIdPublic(arg0);
             return from_candid_opt_n19(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -377,17 +382,17 @@ export class Backend implements backendInterface {
             return from_candid_opt_n19(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getOrdersByCustomer(arg0: string): Promise<Array<ServiceOrder>> {
+    async getOrdersByCustomerPublic(arg0: string): Promise<Array<ServiceOrder>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getOrdersByCustomer(arg0);
+                const result = await this.actor.getOrdersByCustomerPublic(arg0);
                 return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getOrdersByCustomer(arg0);
+            const result = await this.actor.getOrdersByCustomerPublic(arg0);
             return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -416,6 +421,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getQRSettings();
+            return from_candid_opt_n20(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getQRSettingsPublic(): Promise<AdminQRSettings | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getQRSettingsPublic();
+                return from_candid_opt_n20(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getQRSettingsPublic();
             return from_candid_opt_n20(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -458,6 +477,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.loginCustomer(arg0, arg1);
+            return result;
+        }
+    }
+    async markOrderPaid(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markOrderPaid(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markOrderPaid(arg0);
             return result;
         }
     }
@@ -559,6 +592,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async uploadOrderReceipt(arg0: bigint, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadOrderReceipt(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadOrderReceipt(arg0, arg1);
+            return result;
+        }
+    }
 }
 function from_candid_OrderStatus_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _OrderStatus): OrderStatus {
     return from_candid_record_n14(_uploadFile, _downloadFile, value);
@@ -592,6 +639,8 @@ function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 }
 function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     serviceName: string;
+    paymentStatus: string;
+    receiptUrl: string;
     name: string;
     trackingId: string;
     documentDataBase64: string;
@@ -606,6 +655,8 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
     currentStatus: string;
 }): {
     serviceName: string;
+    paymentStatus: string;
+    receiptUrl: string;
     name: string;
     trackingId: string;
     documentDataBase64: string;
@@ -621,6 +672,8 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         serviceName: value.serviceName,
+        paymentStatus: value.paymentStatus,
+        receiptUrl: value.receiptUrl,
         name: value.name,
         trackingId: value.trackingId,
         documentDataBase64: value.documentDataBase64,

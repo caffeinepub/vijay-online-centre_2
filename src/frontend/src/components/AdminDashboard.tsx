@@ -368,6 +368,21 @@ function OrderCard({
     setPreviewIsPdf(isPdf);
   };
 
+  /** Parse a stored field — may be a JSON array of base64 strings or a plain string */
+  const parseFileField = (raw: string): string[] => {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed as string[];
+    } catch {
+      // not JSON — treat as plain base64/data-url
+    }
+    return [raw];
+  };
+
+  const photoItems = parseFileField(order.photoDataBase64);
+  const docItems = parseFileField(order.documentDataBase64);
+
   return (
     <>
       {previewSrc && (
@@ -450,38 +465,35 @@ function OrderCard({
             </span>
           </div>
 
-          {/* Document preview icons (always visible) */}
-          {(order.photoDataBase64 || order.documentDataBase64) && (
-            <div className="flex items-center gap-2 mb-2">
-              {order.photoDataBase64 && (
+          {/* Document preview icons (always visible) — supports array and plain string */}
+          {(photoItems.length > 0 || docItems.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {photoItems.map((item, pIdx) => (
                 <button
+                  key={item.slice(-20)}
                   type="button"
-                  onClick={() => openPreview(order.photoDataBase64, false)}
+                  onClick={() => openPreview(item, false)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors"
-                  title="View photo"
+                  title={`View photo ${pIdx + 1}`}
                   data-ocid={`admin.orders.photo.button.${index}`}
                 >
                   <Eye className="w-3 h-3 text-primary" />
-                  Photo
+                  {photoItems.length > 1 ? `Photo ${pIdx + 1}` : "Photo"}
                 </button>
-              )}
-              {order.documentDataBase64 && (
+              ))}
+              {docItems.map((item, dIdx) => (
                 <button
+                  key={item.slice(-20)}
                   type="button"
-                  onClick={() =>
-                    openPreview(
-                      order.documentDataBase64,
-                      order.documentDataBase64.includes("JVBERi"),
-                    )
-                  }
+                  onClick={() => openPreview(item, item.includes("JVBERi"))}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors"
-                  title="View document"
+                  title={`View document ${dIdx + 1}`}
                   data-ocid={`admin.orders.doc.button.${index}`}
                 >
                   <Eye className="w-3 h-3 text-primary" />
-                  Document
+                  {docItems.length > 1 ? `Doc ${dIdx + 1}` : "Document"}
                 </button>
-              )}
+              ))}
             </div>
           )}
 

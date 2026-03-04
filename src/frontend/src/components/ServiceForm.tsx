@@ -10,7 +10,9 @@ import {
   Copy,
   FileText,
   Loader2,
+  Plus,
   Upload,
+  X,
 } from "lucide-react";
 import type React from "react";
 import { useRef, useState } from "react";
@@ -40,6 +42,8 @@ const SERVICES = [
   "Other",
 ];
 
+const MAX_FILES = 7;
+
 export default function ServiceForm({
   serviceName,
   customerId,
@@ -54,11 +58,15 @@ export default function ServiceForm({
   const [mobile, setMobile] = useState(customerId || "");
   const [address, setAddress] = useState("");
   const [selectedService, setSelectedService] = useState(serviceName || "");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>("");
-  const [documentPreview, setDocumentPreview] = useState<string>("");
+
+  // Multiple file states
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [documentPreviews, setDocumentPreviews] = useState<string[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStage, setSubmitStage] = useState<"files" | "submit">("files");
   const [error, setError] = useState("");
   const [successTrackingId, setSuccessTrackingId] = useState("");
   const [copied, setCopied] = useState(false);
@@ -71,7 +79,6 @@ export default function ServiceForm({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Return just the base64 part without the data URL prefix
         const base64 = result.split(",")[1] || result;
         resolve(base64);
       };
@@ -80,24 +87,54 @@ export default function ServiceForm({
     });
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
+  const readPreview = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => setPhotoPreview(reader.result as string);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
-    }
+    });
   };
 
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setDocumentFile(file);
-      const reader = new FileReader();
-      reader.onload = () => setDocumentPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (!newFiles.length) return;
+
+    const remaining = MAX_FILES - photoFiles.length;
+    const toAdd = newFiles.slice(0, remaining);
+
+    const newPreviews = await Promise.all(toAdd.map(readPreview));
+    setPhotoFiles((prev) => [...prev, ...toAdd]);
+    setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+
+    // Reset input so same files can be re-selected
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const handleDocumentChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (!newFiles.length) return;
+
+    const remaining = MAX_FILES - documentFiles.length;
+    const toAdd = newFiles.slice(0, remaining);
+
+    const newPreviews = await Promise.all(toAdd.map(readPreview));
+    setDocumentFiles((prev) => [...prev, ...toAdd]);
+    setDocumentPreviews((prev) => [...prev, ...newPreviews]);
+
+    if (documentInputRef.current) documentInputRef.current.value = "";
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const removeDocument = (idx: number) => {
+    setDocumentFiles((prev) => prev.filter((_, i) => i !== idx));
+    setDocumentPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleCopy = () => {
@@ -130,21 +167,28 @@ export default function ServiceForm({
     }
 
     setIsSubmitting(true);
+    setSubmitStage("files");
 
     try {
+      // Convert all photos to base64 array then stringify
       let photoDataBase64 = "";
       let documentDataBase64 = "";
 
-      if (photoFile) {
-        photoDataBase64 = await fileToBase64(photoFile);
+      if (photoFiles.length > 0) {
+        const base64Array = await Promise.all(photoFiles.map(fileToBase64));
+        photoDataBase64 = JSON.stringify(base64Array);
       }
-      if (documentFile) {
-        documentDataBase64 = await fileToBase64(documentFile);
+
+      if (documentFiles.length > 0) {
+        const base64Array = await Promise.all(documentFiles.map(fileToBase64));
+        documentDataBase64 = JSON.stringify(base64Array);
       }
+
+      setSubmitStage("submit");
 
       const timestamp = BigInt(Date.now());
 
-      const TIMEOUT_MS = 30000;
+      const TIMEOUT_MS = 60000;
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error("Request timed out. Please try again.")),
@@ -172,9 +216,9 @@ export default function ServiceForm({
       const trackingId = `TRACK${orderIdNum}${suffix}`;
 
       setSuccessTrackingId(trackingId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Submit order error:", err);
-      const msg = err?.message || String(err);
+      const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Actor not available")) {
         setError("सिस्टम तैयार नहीं है। कृपया पेज रिफ्रेश करें और फिर से प्रयास करें।");
       } else {
@@ -342,84 +386,155 @@ export default function ServiceForm({
           />
         </div>
 
-        {/* Photo Upload */}
+        {/* ── Photo Upload (multiple) ───────────────────────────────────────── */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">फोटो (वैकल्पिक)</Label>
-          <button
-            type="button"
-            onClick={() => photoInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
-          >
-            {photoPreview ? (
-              <div className="space-y-2">
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className="w-24 h-24 object-cover rounded-lg mx-auto"
-                />
-                <p className="text-xs text-muted-foreground">
-                  बदलने के लिए क्लिक करें
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Camera className="w-8 h-8 text-muted-foreground mx-auto" />
-                <p className="text-sm text-muted-foreground">फोटो अपलोड करें</p>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG (max 5MB)
-                </p>
-              </div>
-            )}
-          </button>
+          <Label className="text-sm font-semibold">
+            फोटो (वैकल्पिक) — अधिकतम {MAX_FILES}
+          </Label>
+
+          {/* Thumbnail grid */}
+          {photoPreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              {photoPreviews.map((src, idx) => (
+                <div key={src.slice(-20)} className="relative group">
+                  <img
+                    src={src}
+                    alt={`Preview ${idx + 1}`}
+                    className="w-full h-24 object-cover rounded-lg border border-border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(idx)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-sm hover:bg-destructive/80 transition-colors"
+                    data-ocid={`service_form.photo.remove_button.${idx + 1}`}
+                    aria-label={`Remove photo ${idx + 1}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload trigger */}
+          {photoFiles.length < MAX_FILES ? (
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+              data-ocid="service_form.photo.upload_button"
+            >
+              {photoPreviews.length === 0 ? (
+                <div className="space-y-2">
+                  <Camera className="w-8 h-8 text-muted-foreground mx-auto" />
+                  <p className="text-sm text-muted-foreground">6 तक फोटो चुनें</p>
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG (max 5MB each)
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <Plus className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-primary font-medium">
+                    और फोटो जोड़ें ({photoFiles.length}/{MAX_FILES})
+                  </span>
+                </div>
+              )}
+            </button>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-2">
+              अधिकतम {MAX_FILES} फोटो चुने गए हैं
+            </p>
+          )}
+
           <input
             ref={photoInputRef}
             type="file"
             accept="image/*"
+            multiple
             onChange={handlePhotoChange}
             className="hidden"
           />
         </div>
 
-        {/* Document Upload */}
+        {/* ── Document Upload (multiple) ────────────────────────────────────── */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold">दस्तावेज़ (वैकल्पिक)</Label>
-          <button
-            type="button"
-            onClick={() => documentInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
-          >
-            {documentPreview ? (
-              <div className="space-y-2">
-                {documentFile?.type.startsWith("image/") ? (
-                  <img
-                    src={documentPreview}
-                    alt="Document"
-                    className="w-24 h-24 object-cover rounded-lg mx-auto"
-                  />
-                ) : (
-                  <FileText className="w-12 h-12 text-primary mx-auto" />
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {documentFile?.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  बदलने के लिए क्लिक करें
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="w-8 h-8 text-muted-foreground mx-auto" />
-                <p className="text-sm text-muted-foreground">दस्तावेज़ अपलोड करें</p>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, PDF (max 10MB)
-                </p>
-              </div>
-            )}
-          </button>
+          <Label className="text-sm font-semibold">
+            दस्तावेज़ (वैकल्पिक) — अधिकतम {MAX_FILES}
+          </Label>
+
+          {/* Document list with thumbnails/icons */}
+          {documentFiles.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              {documentFiles.map((file, idx) => (
+                <div
+                  key={file.name + file.size}
+                  className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2"
+                >
+                  {file.type.startsWith("image/") ? (
+                    <img
+                      src={documentPreviews[idx]}
+                      alt={`Doc ${idx + 1}`}
+                      className="w-10 h-10 object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <FileText className="w-8 h-8 text-primary flex-shrink-0" />
+                  )}
+                  <span className="text-xs text-foreground flex-1 truncate">
+                    {file.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeDocument(idx)}
+                    className="w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors flex-shrink-0"
+                    data-ocid={`service_form.doc.remove_button.${idx + 1}`}
+                    aria-label={`Remove document ${idx + 1}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload trigger */}
+          {documentFiles.length < MAX_FILES ? (
+            <button
+              type="button"
+              onClick={() => documentInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+              data-ocid="service_form.doc.upload_button"
+            >
+              {documentFiles.length === 0 ? (
+                <div className="space-y-2">
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto" />
+                  <p className="text-sm text-muted-foreground">
+                    6 तक दस्तावेज़ चुनें
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG, PDF (max 10MB each)
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <Plus className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-primary font-medium">
+                    और दस्तावेज़ जोड़ें ({documentFiles.length}/{MAX_FILES})
+                  </span>
+                </div>
+              )}
+            </button>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-2">
+              अधिकतम {MAX_FILES} दस्तावेज़ चुने गए हैं
+            </p>
+          )}
+
           <input
             ref={documentInputRef}
             type="file"
             accept="image/*,.pdf"
+            multiple
             onChange={handleDocumentChange}
             className="hidden"
           />
@@ -427,7 +542,10 @@ export default function ServiceForm({
 
         {/* Error */}
         {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-start gap-2">
+          <div
+            className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-start gap-2"
+            data-ocid="service_form.error_state"
+          >
             <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
             <p className="text-sm text-destructive">{error}</p>
           </div>
@@ -439,11 +557,14 @@ export default function ServiceForm({
             type="submit"
             className="w-full h-12 text-base font-semibold"
             disabled={isSubmitting || isActorLoading}
+            data-ocid="service_form.submit_button"
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                जमा हो रहा है...
+                {submitStage === "files"
+                  ? "फाइलें तैयार हो रही हैं..."
+                  : "जमा हो रहा है..."}
               </span>
             ) : isActorLoading ? (
               <span className="flex items-center gap-2">
